@@ -1,0 +1,10 @@
+requests>=2.31
+pandas>=2.0
+numpy>=1.24
+python-dotenv>=1.0
+google-cloud-bigquery>=3.20
+db-dtypes>=1.2
+scipy>=1.11
+matplotlib>=3.8
+seaborn>=0.13
+jupyter>=1.0

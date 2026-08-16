@@ -1,0 +1,93 @@
+"""
+CSV(수집 결과) → BigQuery bgg_raw 데이터셋 적재.
+
+원칙:
+  - 스키마는 pandas 자동추론에 맡기지 않고 명시한다. rank="Not Ranked" 같은
+    혼입 문자열이 실제로 있는 컬럼이라 자동추론이 타입을 잘못 잡기 쉽다.
+  - WRITE_TRUNCATE로 적재해 재실행해도 멱등(idempotent)하게 만든다.
+    raw는 "가장 최근 수집 결과의 스냅샷"으로 취급하고, 이력이 필요하면
+    적재 시각 컬럼을 추가하는 방향으로 나중에 확장한다.
+  - staging/mart는 이 로더가 아니라 sql/staging, sql/marts의 쿼리가 담당한다.
+    (원본 데이터를 파이썬으로 정제하지 않고 BigQuery SQL로 정제 — DA 포트폴리오
+    관점에서 SQL 비중을 의도적으로 높이는 선택)
+"""
+from __future__ import annotations
+
+from pathlib import Path
+
+import pandas as pd
+from google.cloud import bigquery
+
+# TODO: 컬럼 dtype이 확정되면(수집 후 실제 데이터 확인하며) STRING 일변도에서
+# INTEGER/FLOAT/DATE로 세분화. 초안에서는 결측/이상값이 흔한 원본 특성상
+# 전부 STRING으로 받고 정제는 sql/staging에서 CAST로 처리하는 쪽을 택했다.
+TABLE_SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
+    "user_info": [
+        bigquery.SchemaField(name, "STRING")
+        for name in ["user_id", "yearregistered", "lastlogin", "country",
+                     "stateorprovince", "traderating"]
+    ],
+    "item_info": [
+        bigquery.SchemaField(name, "STRING")
+        for name in ["objectid", "name", "yearpublished", "minplayers",
+                     "maxplayers", "minplaytime", "maxplaytime", "playingtime",
+                     "numowned", "average", "bayesaverage", "stddev", "rank"]
+    ],
+    "user_item": [
+        bigquery.SchemaField(name, "STRING")
+        for name in ["user_id", "objectid", "user_rating", "numplays", "comment"]
+    ],
+    "item_details": [
+        bigquery.SchemaField(name, "STRING")
+        for name in ["objectid", "name", "yearpublished", "minage",
+                     "description", "avg_weights"]
+    ],
+    "item_stats": [
+        bigquery.SchemaField(name, "STRING")
+        for name in ["objectid", "usersrated", "average", "bayesaverage",
+                     "stddev", "owned", "trading", "wanting", "wishing",
+                     "numcomments", "numweights", "averageweight"]
+    ],
+    "item_link": [
+        bigquery.SchemaField(name, "STRING")
+        for name in ["objectid", "link_type", "ref_id", "value"]
+    ],
+    "item_rank": [
+        bigquery.SchemaField(name, "STRING")
+        for name in ["objectid", "rank_type", "friendlyname", "value", "bayesaverage"]
+    ],
+    "user_play": [
+        bigquery.SchemaField(name, "STRING")
+        for name in ["play_id", "user_id", "objectid", "play_date",
+                     "quantity", "length", "incomplete", "location"]
+    ],
+}
+
+
+def load_csv_to_raw(
+    client: bigquery.Client,
+    project_id: str,
+    dataset: str,
+    table_name: str,
+    csv_path: Path,
+) -> None:
+    if table_name not in TABLE_SCHEMAS:
+        raise ValueError(f"알 수 없는 테이블입니다: {table_name}. TABLE_SCHEMAS에 추가하세요.")
+
+    df = pd.read_csv(csv_path, dtype=str)  # 전부 문자열로 읽어 스키마와 맞춘다
+    table_id = f"{project_id}.{dataset}.{table_name}"
+
+    job_config = bigquery.LoadJobConfig(
+        schema=TABLE_SCHEMAS[table_name],
+        write_disposition="WRITE_TRUNCATE",
+    )
+    job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
+    job.result()  # 완료까지 대기, 실패 시 예외로 드러남
+    print(f"{table_id}: {len(df)}행 적재 완료")
+
+
+def ensure_dataset(client: bigquery.Client, project_id: str, dataset: str, location: str = "US") -> None:
+    dataset_id = f"{project_id}.{dataset}"
+    ds = bigquery.Dataset(dataset_id)
+    ds.location = location
+    client.create_dataset(ds, exists_ok=True)

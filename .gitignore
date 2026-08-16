@@ -1,0 +1,16 @@
+# 데이터 (로컬 캐시 및 체크포인트) — 재현 가능하므로 git에 올리지 않음
+data/
+*.csv
+
+# 비밀값
+.env
+*-key.json
+
+# Python
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
