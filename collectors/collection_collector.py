@@ -6,7 +6,7 @@ BGG collection API 수집 — user_item(+ item_info 기초 피처).
 기존 코드(크롤링 코드(주석확인해주세욥).ipynb) 대비 수정한 점:
   1. own을 인자로 노출 — 기본은 기획서와 동일하게 own=1 유지하지만, 한 줄로
      own=0(전체 컬렉션)으로 전환 가능하게 열어둔다. own=1을 쓰는 한 퍼널의
-     "가입→수집가" 전환율은 측정 불가하다는 한계를 README에 명시했다.
+     "가입→수집가" 전환율은 측정 불가하다는 한계를 PLAN.md에 명시했다.
   2. 저장 방식 — 루프 안에서 전체 DataFrame을 concat/drop_duplicates/to_csv 하던
      것을 제거. 유저 단위로 모은 행을 CSV에 append만 한다. (O(n²) → O(n))
   3. 체크포인트 — 완료한 user_id를 별도 파일에 append. 재시작 시 이미 완료된
