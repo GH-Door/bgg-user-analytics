@@ -16,38 +16,18 @@
   <img src="https://img.shields.io/badge/Looker%20Studio-4285F4?style=flat-square&logo=looker&logoColor=white">
 </p>
 
-**🚧 진행 중인 프로젝트입니다.** 현재는 수집/적재 파이프라인 설계와 초안 코드 단계이며, 분석·대시보드는 이후 주차에 채워집니다. 상세 진행 상황은 [PLAN.md](PLAN.md) 참고.
-
 </div>
-
----
-
-## Author
-
-<div align="center">
-
-| <img src="https://github.com/GH-Door.png" width="160"> |
-|:---:|
-| [GH-Door](https://github.com/GH-Door) |
-| 문국현 |
-
-</div>
-
-<br>
-
----
 
 ## Overview
 
 BoardGameGeek(BGG)은 세계 최대 보드게임 커뮤니티로, 유저별 소유 현황·평점·플레이 횟수 등 행동 데이터를 API로 공개한다. 이 데이터를 BGG XML API로 직접 수집해 BigQuery에 적재하고, SQL 기반으로 유저 성장 패턴과 게임 선호도 변화를 분석한다.
 
-DS/DA/AI Engineer가 섞인 기존 포트폴리오에서 **DA 역량**(지표 정의 · SQL · 데이터 한계 인지 · 인사이트의 의사결정 번역)을 명확히 보여주는 것이 목표.
 
 | 항목 | 내용 |
 |:-----|:-----|
 | **📅 Date** | 2026.08.13 ~ 2026.09.09 (진행 중) |
-| **👥 Type** | 개인 프로젝트 (멋쟁이사자처럼 로켓단 25기 인턴십) |
-| **🎯 Goal** | BGG 유저 행동/선호도 분석을 통한 DA 포트폴리오 구축 |
+| **👥 Type** | 개인 프로젝트 |
+| **🎯 Goal** | BGG 유저 행동/선호도 분석 |
 | **🔧 Tech Stack** | Python, BigQuery, BigQuery SQL, pandas, scipy, Looker Studio |
 | **📊 Dataset** | BGG XML API v2 직접 수집 (user / collection / thing / plays) |
 
