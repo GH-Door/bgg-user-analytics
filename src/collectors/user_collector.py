@@ -7,10 +7,13 @@ BGG user API 수집 — user_info 테이블.
 from __future__ import annotations
 
 import csv
+import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from .bgg_client import BGGClient
+from .bgg_client import BGGClient, BGGRequestError
+
+logger = logging.getLogger(__name__)
 
 FIELDS = [
     "user_id", "yearregistered", "lastlogin", "country",
@@ -33,16 +36,28 @@ def parse_user(root: ET.Element, user_id: str) -> dict:
     }
 
 
-def collect_users(client: BGGClient, user_ids: list[str], out_path: Path) -> None:
+def collect_users(client: BGGClient, user_ids: list[str], out_path: Path) -> list[tuple[str, str]]:
     """user_ids를 순회하며 out_path에 append. 체크포인트는 collection_collector와
     동일 패턴(완료 user_id를 별도 파일에 기록)을 쓰면 되지만, user API는 응답이
-    가볍고 실패 시 재실행 비용이 낮아 초안에서는 생략 — 필요해지면 추가."""
+    가볍고 실패 시 재실행 비용이 낮아 초안에서는 생략 — 필요해지면 추가.
+
+    영구적 오류(BGGRequestError)는 user_ids 전체를 중단시키지 않고 그 유저만
+    건너뛴다 — (user_id, 실패 사유) 튜플 리스트로 반환하니 호출부가 원하는
+    방식으로 기록(예: excluded_users.csv)하면 된다."""
+    failed: list[tuple[str, str]] = []
     is_new = not out_path.exists()
     with out_path.open("a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=FIELDS)
         if is_new:
             writer.writeheader()
         for user_id in user_ids:
-            root = client.get("user", {"name": user_id})
+            try:
+                root = client.get("user", {"name": user_id})
+            except BGGRequestError as e:
+                logger.warning(f"유저 {user_id} 수집 제외: {e}")
+                failed.append((user_id, str(e)[:200]))
+                continue
             writer.writerow(parse_user(root, user_id))
             f.flush()
+            logger.info(f"유저 {user_id} 수집 완료")
+    return failed

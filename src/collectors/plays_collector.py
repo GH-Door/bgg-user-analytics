@@ -15,10 +15,14 @@ PLAN.md의 "수집 설계 결정 로그"에 근거와 함께 기록한다.
 from __future__ import annotations
 
 import csv
+import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from .bgg_client import BGGClient
+from .bgg_client import BGGClient, BGGRequestError
+from .checkpoint import append_checkpoint, load_checkpoint, report_progress
+
+logger = logging.getLogger(__name__)
 
 FIELDS = [
     "play_id", "user_id", "objectid", "play_date",
@@ -44,48 +48,55 @@ def _parse_page(root: ET.Element, user_id: str) -> tuple[list[dict], int]:
     return rows, total
 
 
-def _load_checkpoint(checkpoint_path: Path) -> set[str]:
-    if not checkpoint_path.exists():
-        return set()
-    return set(checkpoint_path.read_text(encoding="utf-8").splitlines())
-
-
 def collect_plays(
     client: BGGClient,
     user_ids: list[str],
     out_path: Path,
     checkpoint_path: Path,
+    failed_path: Path,
     page_size: int = 100,
 ) -> None:
     """user_ids(샘플)를 순회하며 각 유저의 전체 플레이 로그를 페이지네이션으로
-    수집한다. 완료한 user_id는 체크포인트에 기록해 재시작 시 건너뛴다."""
-    done = _load_checkpoint(checkpoint_path)
+    수집한다. 완료한 user_id는 체크포인트에 기록해 재시작 시 건너뛴다.
+
+    페이지네이션 도중 영구적 오류가 나면 그 유저는 통째로 건너뛰고 failed_path에
+    기록한다 — 이미 받은 페이지까지는 out_path에 남지만(버리지 않음), 그 유저는
+    "완료"로 체크포인트되지 않으므로 나중에 필요하면 처음부터 재수집 대상으로
+    식별할 수 있다(ponytail: 페이지 단위 재개는 지금 범위 밖, 필요해지면 추가)."""
+    done = load_checkpoint(checkpoint_path)
+    failed = load_checkpoint(failed_path)
     is_new = not out_path.exists()
+    total = len(user_ids)
 
-    with out_path.open("a", newline="", encoding="utf-8") as f, \
-         checkpoint_path.open("a", encoding="utf-8") as ckpt_f:
-
+    with out_path.open("a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=FIELDS)
         if is_new:
             writer.writeheader()
 
-        for user_id in user_ids:
-            if user_id in done:
+        for i, user_id in enumerate(user_ids, start=1):
+            if user_id in done or user_id in failed:
                 continue
 
             page = 1
             collected = 0
-            while True:
-                root = client.get("plays", {"username": user_id, "page": page})
-                rows, total = _parse_page(root, user_id)
-                if not rows:
-                    break
-                writer.writerows(rows)
-                collected += len(rows)
-                if collected >= total:
-                    break
-                page += 1
+            try:
+                while True:
+                    root = client.get("plays", {"username": user_id, "page": page})
+                    rows, page_total = _parse_page(root, user_id)
+                    if not rows:
+                        break
+                    writer.writerows(rows)
+                    collected += len(rows)
+                    if collected >= page_total:
+                        break
+                    page += 1
+            except BGGRequestError as e:
+                logger.warning(f"유저 {user_id} plays 수집 제외 (page={page}): {e}")
+                f.flush()
+                append_checkpoint(failed_path, user_id)
+                report_progress("plays", i, total)
+                continue
 
             f.flush()
-            ckpt_f.write(user_id + "\n")
-            ckpt_f.flush()
+            append_checkpoint(checkpoint_path, user_id)
+            report_progress("plays", i, total)

@@ -16,14 +16,23 @@ item_mechanic / item_rank(브리지 테이블, long 포맷).
 기획서의 numwishing 외에 같은 응답에 이미 들어있는 stats 전체
 (wishing/wanting/trading/owned/numcomments/numweights/averageweight)도
 함께 뽑는다 — 추가 API 호출 비용 없이 얻는 피처.
+
+체크포인트: 배치(BATCH_SIZE개) 단위로 완료 시 그 배치의 모든 objectid를
+기록한다. 약 29,000개 게임 × 20개씩이면 1,450번 이상 요청해야 하고 5초
+간격이면 2시간 이상 걸리는데, 체크포인트가 없으면 중간에 죽었을 때 처음부터
+다시 돌려야 하고 그러면 이미 쓴 행이 전부 중복된다.
 """
 from __future__ import annotations
 
 import csv
+import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from .bgg_client import BGGClient
+from .bgg_client import BGGClient, BGGRequestError
+from .checkpoint import append_checkpoint, load_checkpoint, report_progress
+
+logger = logging.getLogger(__name__)
 
 BATCH_SIZE = 20
 
@@ -51,15 +60,22 @@ def _batched(seq: list[str], size: int):
         yield seq[i:i + size]
 
 
+def _attr(item: ET.Element, tag: str, key: str = "value") -> str:
+    el = item.find(tag)
+    return el.get(key, "") if el is not None else ""
+
+
 def parse_thing(item: ET.Element) -> tuple[dict, dict, list[dict], list[dict]]:
     objectid = item.get("id", "")
 
     detail_row = {
         "objectid": objectid,
-        "name": (item.find("name").get("value") if item.find("name") is not None else ""),
-        "yearpublished": (item.findtext("yearpublished") or ""),
-        "minage": (item.findtext("minage") or ""),
-        "description": (item.findtext("description") or ""),
+        "name": _attr(item, "name"),
+        # yearpublished/minage는 <tag value="X"/> 속성 기반이라 findtext로는
+        # 항상 빈 문자열이 나온다 (fixtures/thing_id8148.xml로 실측 확인).
+        "yearpublished": _attr(item, "yearpublished"),
+        "minage": _attr(item, "minage"),
+        "description": (item.findtext("description") or ""),  # 이건 진짜 텍스트 콘텐츠
         "avg_weights": "",  # averageweight는 statistics 쪽에 있음 → stats_row에서 채움
     }
 
@@ -116,7 +132,14 @@ def collect_things(
     stats_out_path: Path,
     link_out_path: Path,
     rank_out_path: Path,
+    checkpoint_path: Path,
+    failed_path: Path,
 ) -> None:
+    done = load_checkpoint(checkpoint_path)
+    failed = load_checkpoint(failed_path)
+    pending = [oid for oid in object_ids if oid not in done and oid not in failed]
+    total_ids = len(object_ids)
+
     paths_fields = [
         (detail_out_path, DETAIL_FIELDS),
         (stats_out_path, STATS_FIELDS),
@@ -133,8 +156,22 @@ def collect_things(
     detail_w, stats_w, link_w, rank_w = writers
 
     try:
-        for batch in _batched(object_ids, BATCH_SIZE):
-            root = client.get("thing", {"id": ",".join(batch), "stats": 1})
+        done_count = total_ids - len(pending)
+        for batch in _batched(pending, BATCH_SIZE):
+            try:
+                root = client.get("thing", {"id": ",".join(batch), "stats": 1})
+            except BGGRequestError as e:
+                # 배치 전체를 영구 실패로 표시 — thing API는 보통 없는 id가 섞여도
+                # 200 + 해당 id만 빠진 응답을 주므로, 여기까지 오는 4xx는 배치
+                # 자체가 잘못된 드문 경우다. id별로 쪼개 재시도하지 않고 배치째
+                # 건너뛴다(ponytail: 배치 재시도보다 단순, 필요해지면 세분화).
+                logger.warning(f"thing 배치 수집 제외 (id={','.join(batch)}): {e}")
+                for oid in batch:
+                    append_checkpoint(failed_path, oid)
+                done_count += len(batch)
+                report_progress("thing", done_count, total_ids)
+                continue
+
             for item in root.findall("item"):
                 detail_row, stats_row, link_rows, rank_rows = parse_thing(item)
                 detail_w.writerow(detail_row)
@@ -143,6 +180,13 @@ def collect_things(
                 rank_w.writerows(rank_rows)
             for f in files:
                 f.flush()
+            # 배치 전체가 성공했을 때만 체크포인트 — 배치 안 일부만 실패해도
+            # 그 배치는 통째로 다음 실행에서 재시도된다(부분 재시도보다 단순하고,
+            # 배치 단위 재시도의 API 비용은 무시할 수준).
+            for oid in batch:
+                append_checkpoint(checkpoint_path, oid)
+            done_count += len(batch)
+            report_progress("thing", done_count, total_ids)
     finally:
         for f in files:
             f.close()

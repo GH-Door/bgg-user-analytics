@@ -1,0 +1,18 @@
+[project]
+name = "bgg-user-analytics"
+version = "0.1.0"
+description = "BGG(BoardGameGeek) 유저 행동 패턴 및 게임 선호도 분석"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31",
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "python-dotenv>=1.0",
+    "google-cloud-bigquery>=3.20",
+    "db-dtypes>=1.2",
+    "scipy>=1.11",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "jupyter>=1.0",
+]

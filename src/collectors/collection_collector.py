@@ -12,14 +12,30 @@ BGG collection API 수집 — user_item(+ item_info 기초 피처).
   3. 체크포인트 — 완료한 user_id를 별도 파일에 append. 재시작 시 이미 완료된
      유저를 건너뛴다. 기존 코드처럼 iloc 인덱스를 손으로 찾지 않아도 된다.
   4. 중복 키를 objectid로 판단 (기존 코드는 name으로 판단해 동명이품이 유실됨).
+
+주의: seen_objectids는 "이미 완료한 user_id"와 별개로, item_out_path에 이미 있는
+objectid를 시작 시 미리 읽어들여 초기화한다. 그렇게 안 하면 중단 후 재시작할 때
+이전 실행에서 이미 쓴 게임이 새 유저의 컬렉션에 또 나올 때마다 item_info.csv에
+중복 행이 쌓인다 — user_id 체크포인트만으로는 이 케이스를 못 막는다.
+
+user_item에 <status> 플래그(own/want/wishlist/fortrade/lastmodified 등)를 추가로
+담는다 — 2024 데이터에도 없던 필드지만, 이미 부르는 collection API 응답에
+공짜로 들어있고(추가 요청 비용 없음), 향후 추천 시스템을 붙일 때 "소유는
+했지만 fortrade로 표시됨(부정적 신호)"처럼 rating/numplays보다 세밀한 암묵적
+피드백 신호로 쓸 수 있다. own=1로 고정 수집하는 한 own은 항상 "1"이지만,
+나머지 플래그는 유의미하게 갈린다.
 """
 from __future__ import annotations
 
 import csv
+import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from .bgg_client import BGGClient
+from .bgg_client import BGGClient, BGGRequestError
+from .checkpoint import append_checkpoint, load_checkpoint, report_progress
+
+logger = logging.getLogger(__name__)
 
 ITEM_FIELDS = [
     "objectid", "name", "yearpublished", "minplayers", "maxplayers",
@@ -27,7 +43,16 @@ ITEM_FIELDS = [
     "average", "bayesaverage", "stddev", "rank",
 ]
 
-USER_ITEM_FIELDS = ["user_id", "objectid", "user_rating", "numplays", "comment"]
+USER_ITEM_FIELDS = [
+    "user_id", "objectid", "user_rating", "numplays", "comment",
+    "own", "prevowned", "fortrade", "want", "wanttoplay", "wanttobuy",
+    "wishlist", "wishlistpriority", "preordered", "lastmodified",
+]
+
+STATUS_FLAG_KEYS = [
+    "own", "prevowned", "fortrade", "want", "wanttoplay", "wanttobuy",
+    "wishlist", "wishlistpriority", "preordered", "lastmodified",
+]
 
 
 def _stat_attr(item: ET.Element, tag: str, key: str = "value") -> str:
@@ -67,20 +92,27 @@ def parse_collection_item(item: ET.Element) -> tuple[dict, dict]:
     }
 
     rating_el = stats.find("rating") if stats is not None else None
+    status_el = item.find("status")
     user_item_row = {
         "user_id": "",  # 호출부에서 채움
         "objectid": item.get("objectid", ""),
         "user_rating": (rating_el.get("value") if rating_el is not None else ""),
         "numplays": (item.findtext("numplays") or "0"),
         "comment": (item.findtext("comment") or ""),
+        **{
+            key: (status_el.get(key, "") if status_el is not None else "")
+            for key in STATUS_FLAG_KEYS
+        },
     }
     return item_row, user_item_row
 
 
-def _load_checkpoint(checkpoint_path: Path) -> set[str]:
-    if not checkpoint_path.exists():
+def _load_existing_objectids(item_out_path: Path) -> set[str]:
+    """재시작 시 item_out_path에 이미 저장된 objectid를 읽어 중복 재기록을 막는다."""
+    if not item_out_path.exists():
         return set()
-    return set(checkpoint_path.read_text(encoding="utf-8").splitlines())
+    with item_out_path.open(newline="", encoding="utf-8") as f:
+        return {row["objectid"] for row in csv.DictReader(f)}
 
 
 def collect_collections(
@@ -89,17 +121,18 @@ def collect_collections(
     item_out_path: Path,
     user_item_out_path: Path,
     checkpoint_path: Path,
+    failed_path: Path,
     own: int = 1,
 ) -> None:
-    done = _load_checkpoint(checkpoint_path)
-    seen_objectids: set[str] = set()  # 이번 실행에서 이미 쓴 아이템은 재작성하지 않음(경량 중복 방지)
+    done = load_checkpoint(checkpoint_path)
+    failed = load_checkpoint(failed_path)
+    seen_objectids = _load_existing_objectids(item_out_path)
 
     item_is_new = not item_out_path.exists()
     user_item_is_new = not user_item_out_path.exists()
 
     with item_out_path.open("a", newline="", encoding="utf-8") as item_f, \
-         user_item_out_path.open("a", newline="", encoding="utf-8") as ui_f, \
-         checkpoint_path.open("a", encoding="utf-8") as ckpt_f:
+         user_item_out_path.open("a", newline="", encoding="utf-8") as ui_f:
 
         item_writer = csv.DictWriter(item_f, fieldnames=ITEM_FIELDS)
         ui_writer = csv.DictWriter(ui_f, fieldnames=USER_ITEM_FIELDS)
@@ -108,13 +141,20 @@ def collect_collections(
         if user_item_is_new:
             ui_writer.writeheader()
 
-        for user_id in user_ids:
-            if user_id in done:
+        total = len(user_ids)
+        for i, user_id in enumerate(user_ids, start=1):
+            if user_id in done or user_id in failed:
                 continue
 
-            root = client.get("collection", {
-                "username": user_id, "own": own, "stats": 1,
-            })
+            try:
+                root = client.get("collection", {
+                    "username": user_id, "own": own, "stats": 1,
+                })
+            except BGGRequestError as e:
+                logger.warning(f"유저 {user_id} 컬렉션 수집 제외: {e}")
+                append_checkpoint(failed_path, user_id)
+                report_progress("collection", i, total)
+                continue
 
             for item in root.findall("item"):
                 if item.get("subtype") != "boardgame":
@@ -129,5 +169,5 @@ def collect_collections(
 
             item_f.flush()
             ui_f.flush()
-            ckpt_f.write(user_id + "\n")
-            ckpt_f.flush()
+            append_checkpoint(checkpoint_path, user_id)
+            report_progress("collection", i, total)

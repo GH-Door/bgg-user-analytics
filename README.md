@@ -49,37 +49,45 @@ BoardGameGeek(BGG)은 세계 최대 보드게임 커뮤니티로, 유저별 소�
 bgg/
 ├── README.md              # 이 문서
 ├── PLAN.md                # 상세 설계 · 수집 결정 로그 · 지표 정의 · 주차별 TODO
-├── collectors/             # BGG XML API 수집 모듈
-│   ├── bgg_client.py       # 인증/레이트리밋/재시도 공통 HTTP 계층
-│   ├── user_collector.py
-│   ├── collection_collector.py
-│   ├── thing_collector.py
-│   └── plays_collector.py  # 실제 플레이 로그 기반 코호트 (신규)
-├── loaders/
-│   └── bigquery_loader.py  # CSV → BigQuery raw 적재
+├── src/
+│   ├── collectors/         # BGG XML API 수집 모듈
+│   │   ├── bgg_client.py   # 인증/레이트리밋/재시도 공통 HTTP 계층
+│   │   ├── user_collector.py
+│   │   ├── collection_collector.py
+│   │   ├── thing_collector.py
+│   │   ├── plays_collector.py   # 실제 플레이 로그 기반 코호트 (신규)
+│   │   ├── checkpoint.py   # 체크포인트/진행률 공용 유틸
+│   │   ├── fixtures/       # 파서 회귀 테스트용 실제 BGG 응답 샘플
+│   │   ├── test_bgg_client.py   # HTTP 계층 셀프 체크
+│   │   └── test_parsers.py      # 파싱 로직 회귀 테스트
+│   └── loaders/
+│       └── bigquery_loader.py   # CSV → BigQuery raw 적재
 ├── sql/
 │   ├── staging/            # raw → 정제/정규화
 │   └── marts/               # 퍼널 · 코호트 · 세그먼트 · 트렌드
-├── analysis/                # EDA, 가설 검증 노트북
+├── jupyter/                 # EDA, 가설 검증 노트북
 ├── docs/                    # 지표 정의서, 데이터 사전, 품질 리포트
 ├── dashboard/                # Looker Studio 연동 메모
 └── data/                     # 로컬 캐시 + 체크포인트 (git 제외)
 ```
+
+`src/` 아래 모듈만 재사용 가능한 코드로 두는 이유: 나중에 여유가 되면 추천 시스템(`src/features/`, `src/models/`)을 얹을 때 `bgg_mart`의 산출물을 그대로 소비하는 새 서브패키지만 추가하면 되고, 지금 있는 코드는 안 건드려도 된다 — 지금 당장 빈 폴더를 만들어두진 않는다.
 
 ---
 
 ## 🚀 Quick Start
 
 ```bash
-# 1. 가상환경 + 의존성
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
+# 1. 의존성 설치 (uv가 .venv 생성 + Python 버전까지 알아서 관리)
+curl -LsSf https://astral.sh/uv/install.sh | sh   # uv 없는 경우
+uv sync
 
 # 2. 환경변수 (BGG API 토큰, GCP 프로젝트 ID)
 cp .env.example .env
 
-# 3. 셀프 체크 (네트워크 불필요)
-python3 collectors/test_bgg_client.py
+# 3. 셀프 체크 (네트워크 불필요, 저장소 루트에서 실행)
+uv run python -m src.collectors.test_bgg_client
+uv run python -m src.collectors.test_parsers
 ```
 
 BGG API 토큰 발급 방법, GCP 인증, 전체 실행 순서는 [PLAN.md §12](PLAN.md#12-실행-방법) 참고.

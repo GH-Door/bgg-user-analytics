@@ -4,6 +4,10 @@ CSV(수집 결과) → BigQuery bgg_raw 데이터셋 적재.
 원칙:
   - 스키마는 pandas 자동추론에 맡기지 않고 명시한다. rank="Not Ranked" 같은
     혼입 문자열이 실제로 있는 컬럼이라 자동추론이 타입을 잘못 잡기 쉽다.
+  - 컬럼 목록은 각 collector의 *_FIELDS를 그대로 가져다 쓴다. 예전엔 여기
+    TABLE_SCHEMAS에 컬럼명을 손으로 다시 나열했는데, collector 쪽 필드가
+    바뀌어도 여기가 안 바뀌면 조용히 어긋난다 — 단일 진실 공급원을 collector로
+    통일해 이 드리프트를 원천 차단한다.
   - WRITE_TRUNCATE로 적재해 재실행해도 멱등(idempotent)하게 만든다.
     raw는 "가장 최근 수집 결과의 스냅샷"으로 취급하고, 이력이 필요하면
     적재 시각 컬럼을 추가하는 방향으로 나중에 확장한다.
@@ -18,49 +22,30 @@ from pathlib import Path
 import pandas as pd
 from google.cloud import bigquery
 
+from ..collectors.user_collector import FIELDS as USER_INFO_FIELDS
+from ..collectors.collection_collector import ITEM_FIELDS, USER_ITEM_FIELDS
+from ..collectors.thing_collector import (
+    DETAIL_FIELDS, STATS_FIELDS, LINK_FIELDS, RANK_FIELDS,
+)
+from ..collectors.plays_collector import FIELDS as USER_PLAY_FIELDS
+
 # TODO: 컬럼 dtype이 확정되면(수집 후 실제 데이터 확인하며) STRING 일변도에서
 # INTEGER/FLOAT/DATE로 세분화. 초안에서는 결측/이상값이 흔한 원본 특성상
 # 전부 STRING으로 받고 정제는 sql/staging에서 CAST로 처리하는 쪽을 택했다.
+_RAW_TABLE_FIELDS: dict[str, list[str]] = {
+    "user_info": USER_INFO_FIELDS,
+    "item_info": ITEM_FIELDS,
+    "user_item": USER_ITEM_FIELDS,
+    "item_details": DETAIL_FIELDS,
+    "item_stats": STATS_FIELDS,
+    "item_link": LINK_FIELDS,
+    "item_rank": RANK_FIELDS,
+    "user_play": USER_PLAY_FIELDS,
+}
+
 TABLE_SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
-    "user_info": [
-        bigquery.SchemaField(name, "STRING")
-        for name in ["user_id", "yearregistered", "lastlogin", "country",
-                     "stateorprovince", "traderating"]
-    ],
-    "item_info": [
-        bigquery.SchemaField(name, "STRING")
-        for name in ["objectid", "name", "yearpublished", "minplayers",
-                     "maxplayers", "minplaytime", "maxplaytime", "playingtime",
-                     "numowned", "average", "bayesaverage", "stddev", "rank"]
-    ],
-    "user_item": [
-        bigquery.SchemaField(name, "STRING")
-        for name in ["user_id", "objectid", "user_rating", "numplays", "comment"]
-    ],
-    "item_details": [
-        bigquery.SchemaField(name, "STRING")
-        for name in ["objectid", "name", "yearpublished", "minage",
-                     "description", "avg_weights"]
-    ],
-    "item_stats": [
-        bigquery.SchemaField(name, "STRING")
-        for name in ["objectid", "usersrated", "average", "bayesaverage",
-                     "stddev", "owned", "trading", "wanting", "wishing",
-                     "numcomments", "numweights", "averageweight"]
-    ],
-    "item_link": [
-        bigquery.SchemaField(name, "STRING")
-        for name in ["objectid", "link_type", "ref_id", "value"]
-    ],
-    "item_rank": [
-        bigquery.SchemaField(name, "STRING")
-        for name in ["objectid", "rank_type", "friendlyname", "value", "bayesaverage"]
-    ],
-    "user_play": [
-        bigquery.SchemaField(name, "STRING")
-        for name in ["play_id", "user_id", "objectid", "play_date",
-                     "quantity", "length", "incomplete", "location"]
-    ],
+    table: [bigquery.SchemaField(name, "STRING") for name in fields]
+    for table, fields in _RAW_TABLE_FIELDS.items()
 }
 
 
