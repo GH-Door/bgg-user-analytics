@@ -5,8 +5,14 @@ item_mechanic / item_rank(브리지 테이블, long 포맷).
 호출: GET /xmlapi2/thing?id=1,2,3,...&stats=1
   - thing API는 id를 콤마로 여러 개 넘길 수 있다. collection_collector처럼
     유저 단위로 1건씩 부르지 않고 배치로 묶어 요청 수를 크게 줄인다.
-  - TODO: 배치 크기(BATCH_SIZE)의 실제 상한은 토큰 발급 후 공식 문서에서 확인.
-    초안에서는 보수적으로 20으로 시작.
+  - BATCH_SIZE=20은 실측 확인됨(2026-08-23) — 20개는 200, 21개부터 즉시 400.
+
+주의: thing API는 배치 요청 중 존재하지 않는/병합된 id가 섞여 있으면 4xx가 아니라
+HTTP 200 + 그 id만 빠진 응답을 준다(실측 확인: id=13,999999999,68448 요청 →
+item 2개만 응답, 에러 표시 없음). 그래서 배치 응답에서 실제로 돌아온 id를
+확인해 요청한 id 집합과 비교하고, 빠진 id는 성공 체크포인트가 아니라
+failed_path로 분리한다 — 안 그러면 데이터 없는 objectid가 "수집 완료"로
+영구 기록되어 다시는 재시도되지 않는다.
 
 기존 데이터의 category/mechanic/family/designer/publisher가
 "[('1050', 'Ancient'), ...]" 같은 파이썬 튜플 문자열로 저장되어 있던 문제를
@@ -63,6 +69,15 @@ def _batched(seq: list[str], size: int):
 def _attr(item: ET.Element, tag: str, key: str = "value") -> str:
     el = item.find(tag)
     return el.get(key, "") if el is not None else ""
+
+
+def _load_existing_objectids(detail_out_path: Path) -> set[str]:
+    """재시작 시 detail_out_path에 이미 저장된 objectid를 읽어 중복 재기록을 막는다.
+    (collection_collector._load_existing_objectids와 동일 패턴)"""
+    if not detail_out_path.exists():
+        return set()
+    with detail_out_path.open(newline="", encoding="utf-8") as f:
+        return {row["objectid"] for row in csv.DictReader(f)}
 
 
 def parse_thing(item: ET.Element) -> tuple[dict, dict, list[dict], list[dict]]:
@@ -134,11 +149,13 @@ def collect_things(
     rank_out_path: Path,
     checkpoint_path: Path,
     failed_path: Path,
+    start_time: float | None = None,
 ) -> None:
     done = load_checkpoint(checkpoint_path)
     failed = load_checkpoint(failed_path)
     pending = [oid for oid in object_ids if oid not in done and oid not in failed]
     total_ids = len(object_ids)
+    seen_objectids = _load_existing_objectids(detail_out_path)
 
     paths_fields = [
         (detail_out_path, DETAIL_FIELDS),
@@ -161,32 +178,48 @@ def collect_things(
             try:
                 root = client.get("thing", {"id": ",".join(batch), "stats": 1})
             except BGGRequestError as e:
-                # 배치 전체를 영구 실패로 표시 — thing API는 보통 없는 id가 섞여도
-                # 200 + 해당 id만 빠진 응답을 주므로, 여기까지 오는 4xx는 배치
-                # 자체가 잘못된 드문 경우다. id별로 쪼개 재시도하지 않고 배치째
-                # 건너뛴다(ponytail: 배치 재시도보다 단순, 필요해지면 세분화).
+                # 배치 전체를 영구 실패로 표시 — id별로 쪼개 재시도하지 않고
+                # 배치째 건너뛴다(ponytail: 배치 재시도보다 단순, 필요해지면 세분화).
                 logger.warning(f"thing 배치 수집 제외 (id={','.join(batch)}): {e}")
                 for oid in batch:
                     append_checkpoint(failed_path, oid)
                 done_count += len(batch)
-                report_progress("thing", done_count, total_ids)
+                report_progress("thing", done_count, total_ids, start_time=start_time)
                 continue
 
-            for item in root.findall("item"):
+            items = root.findall("item")
+            returned_ids = {item.get("id", "") for item in items}
+            missing_ids = [oid for oid in batch if oid not in returned_ids]
+            if missing_ids:
+                # thing API는 삭제/병합된 id가 섞여도 4xx가 아니라 200 + 그 id만
+                # 빠진 응답을 준다(실측 확인). 빠진 id를 성공으로 체크포인트하면
+                # 데이터 없이 "완료"로 영구 기록되어 다시는 재시도 안 된다 — 반드시
+                # failed_path로 분리한다.
+                logger.warning(
+                    f"thing 배치 일부 누락 (요청 {len(batch)}개 중 {len(missing_ids)}개 "
+                    f"응답 없음, id={','.join(missing_ids)}) — 삭제/병합된 게임일 가능성"
+                )
+                for oid in missing_ids:
+                    append_checkpoint(failed_path, oid)
+
+            for item in items:
+                objectid = item.get("id", "")
+                if objectid in seen_objectids:
+                    continue  # 재시작 시 크래시 윈도우로 인한 중복 방지
                 detail_row, stats_row, link_rows, rank_rows = parse_thing(item)
                 detail_w.writerow(detail_row)
                 stats_w.writerow(stats_row)
                 link_w.writerows(link_rows)
                 rank_w.writerows(rank_rows)
+                seen_objectids.add(objectid)
             for f in files:
                 f.flush()
-            # 배치 전체가 성공했을 때만 체크포인트 — 배치 안 일부만 실패해도
-            # 그 배치는 통째로 다음 실행에서 재시도된다(부분 재시도보다 단순하고,
-            # 배치 단위 재시도의 API 비용은 무시할 수준).
+            # 실제로 응답에 있었던 id만 성공 체크포인트.
             for oid in batch:
-                append_checkpoint(checkpoint_path, oid)
+                if oid in returned_ids:
+                    append_checkpoint(checkpoint_path, oid)
             done_count += len(batch)
-            report_progress("thing", done_count, total_ids)
+            report_progress("thing", done_count, total_ids, start_time=start_time)
     finally:
         for f in files:
             f.close()
