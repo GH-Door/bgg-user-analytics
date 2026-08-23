@@ -134,7 +134,7 @@ class BGGClient:
                 continue
 
             try:
-                return ET.fromstring(resp.content)
+                root = ET.fromstring(resp.content)
             except ET.ParseError as e:
                 wait = min(2 ** attempt, 30)
                 logger.warning(
@@ -143,6 +143,22 @@ class BGGClient:
                 )
                 time.sleep(wait)
                 continue
+
+            if root.tag == "errors":
+                # BGG는 잘못된 요청(예: 존재하지 않는 유저명)에도 HTTP 200을 주고
+                # 본문에 <errors><error><message>...</message></error></errors>를
+                # 담는 경우가 있다(collection API에서 실측, thing/user는 각자 4xx로
+                # 응답해서 이 경로는 안 타지만 collection은 200으로 온다). 상태 코드만
+                # 보면 성공으로 착각해 빈 데이터를 "정상 수집 완료"로 체크포인트하는
+                # 버그가 됨 — 실제로 파일럿 테스트에서 발견(TROUBLESHOOTING.md 참고).
+                msg_el = root.find("error/message")
+                msg = msg_el.text if msg_el is not None else "(메시지 없음)"
+                raise BGGRequestError(
+                    f"{endpoint} 요청이 200 응답 안에 <errors>를 담고 왔습니다 "
+                    f"(재시도 대상 아님): {msg!r}. params={params}"
+                )
+
+            return root
 
         logger.error(f"{endpoint} 요청이 {self.max_retries}회 재시도 후에도 실패 (params={params})")
         raise BGGRequestError(
