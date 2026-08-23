@@ -12,9 +12,8 @@ BGGRequestError(4xx)는 "이 후보는 무효"로 보고 excluded_users.csv에 �
 기록한 뒤 다음 후보로 넘어간다 — collect_users가 반환하는 실패 목록을 그대로 씀.
 BGGAuthError(401)는 토큰 문제라 즉시 중단한다(재시도해도 의미 없음).
 
-로그는 logging 모듈로 logs/screen_YYYYMMDD.log에 남긴다. 날짜는 "지금"이 아니라
-이 작업이 최초로 시작된 날짜(영속화된 시작 시각 기준) — 재시작하거나 자정을
-넘겨도 로그가 파일 하나로 이어진다.
+로깅 설정(로그 파일 위치·포맷, 시작 시각 영속화)은 scripts/_common.py 공용
+유틸을 쓴다 — phase2/phase3 스크립트와 동일 패턴.
 """
 from __future__ import annotations
 
@@ -23,18 +22,18 @@ import logging
 import os
 import random
 import time
-from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
 
+from scripts._common import get_or_set_started_at, setup_logging
 from src.collectors.bgg_client import BGGClient
+from src.collectors.checkpoint import report_progress
 from src.collectors.user_collector import collect_users
 
 load_dotenv()
 
 DATA_DIR = Path("data")
-LOGS_DIR = Path("logs")
 SEED = 20260818
 SCREENING_N = 3000
 
@@ -45,33 +44,6 @@ EXCLUDED_LOG_PATH = DATA_DIR / "excluded_users.csv"
 STARTED_AT_PATH = DATA_DIR / ".user_info_started_at"
 
 logger = logging.getLogger("screen")
-
-
-def _get_or_set_started_at() -> float:
-    """최초 실행 시각(epoch)을 파일에 영속화한다. 스크립트를 재시작해도
-    이 값은 그대로라 '최초 시작부터 누적 경과 시간'과 로그 파일명이 안 바뀐다."""
-    if STARTED_AT_PATH.exists():
-        return float(STARTED_AT_PATH.read_text().strip())
-    now = time.time()
-    STARTED_AT_PATH.write_text(str(now))
-    return now
-
-
-def _setup_logging(started_at: float) -> None:
-    date_str = datetime.fromtimestamp(started_at).strftime("%Y%m%d")
-    log_path = LOGS_DIR / f"screen_{date_str}.log"
-    formatter = logging.Formatter(
-        fmt="%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-    )
-    file_handler = logging.FileHandler(log_path, encoding="utf-8")
-    file_handler.setFormatter(formatter)
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(formatter)
-
-    root = logging.getLogger()
-    root.setLevel(logging.INFO)
-    root.addHandler(file_handler)
-    root.addHandler(stream_handler)
 
 
 def _load_sample() -> list[str]:
@@ -111,8 +83,8 @@ def _log_excluded(user_id: str, reason: str) -> None:
 
 
 def main() -> None:
-    started_at = _get_or_set_started_at()
-    _setup_logging(started_at)
+    started_at = get_or_set_started_at(STARTED_AT_PATH)
+    setup_logging(started_at, "screen")
 
     sample = _load_sample()
     done = _user_ids_in(OUT_PATH)
@@ -133,18 +105,7 @@ def main() -> None:
         failed = collect_users(client, [user_id], OUT_PATH)
         for uid, reason in failed:
             _log_excluded(uid, reason)
-
-        if i % 100 == 0 or i == len(todo):
-            elapsed_run = time.monotonic() - t0
-            elapsed_total = time.time() - started_at  # 최초 시작부터 누적(재시작 downtime 포함)
-            rate = elapsed_run / i  # 초/명, 이번 실행 기준
-            remaining = rate * (len(todo) - i)
-            logger.info(
-                f"{i}/{len(todo)} 처리 · "
-                f"이번 실행 경과 {elapsed_run/60:.1f}분 · "
-                f"최초 시작부터 누적 {elapsed_total/60:.1f}분 · "
-                f"예상 잔여 {remaining/60:.1f}분"
-            )
+        report_progress("screen", i, len(todo), start_time=t0)
 
     logger.info(
         f"=== 전체 완료 · 이번 실행 소요 {(time.monotonic()-t0)/60:.1f}분 · "
