@@ -5,16 +5,14 @@ PLAN.md 트랙 A 1번 작업 — 이후 모든 트랙 A 작업(전처리/지표/
 1회성 스크립트. 실제 재수집이 끝나면 다시 쓸 일 없다 — fallback_adapter.py와
 함께 그때 지워도 된다.
 
-실행: uv run python scripts/load_fallback_2024.py
+실행: uv run python -m scripts.load_fallback_2024 (저장소 루트에서, collect_phase*.py와
+동일한 실행 방식 — 이러면 src/가 sys.path에 잡혀서 수동 삽입이 필요 없다)
 필요: .env에 GCP_PROJECT_ID, gcloud auth application-default login 완료
 """
 from __future__ import annotations
 
 import os
-import sys
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from dotenv import load_dotenv
 from google.cloud import bigquery

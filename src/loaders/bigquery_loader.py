@@ -17,10 +17,13 @@ CSV(수집 결과) → BigQuery bgg_raw 데이터셋 적재.
 """
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import pandas as pd
 from google.cloud import bigquery
+
+logger = logging.getLogger(__name__)
 
 from ..collectors.user_collector import FIELDS as USER_INFO_FIELDS
 from ..collectors.collection_collector import ITEM_FIELDS, USER_ITEM_FIELDS
@@ -68,7 +71,7 @@ def load_csv_to_raw(
     )
     job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
     job.result()  # 완료까지 대기, 실패 시 예외로 드러남
-    print(f"{table_id}: {len(df)}행 적재 완료")
+    logger.info(f"{table_id}: {len(df)}행 적재 완료")
 
 
 def ensure_dataset(client: bigquery.Client, project_id: str, dataset: str, location: str = "US") -> None:
