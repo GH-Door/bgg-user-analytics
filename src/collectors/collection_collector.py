@@ -123,6 +123,7 @@ def collect_collections(
     checkpoint_path: Path,
     failed_path: Path,
     own: int = 1,
+    start_time: float | None = None,
 ) -> None:
     done = load_checkpoint(checkpoint_path)
     failed = load_checkpoint(failed_path)
@@ -153,7 +154,7 @@ def collect_collections(
             except BGGRequestError as e:
                 logger.warning(f"유저 {user_id} 컬렉션 수집 제외: {e}")
                 append_checkpoint(failed_path, user_id)
-                report_progress("collection", i, total)
+                report_progress("collection", i, total, start_time=start_time)
                 continue
 
             for item in root.findall("item"):
@@ -170,4 +171,4 @@ def collect_collections(
             item_f.flush()
             ui_f.flush()
             append_checkpoint(checkpoint_path, user_id)
-            report_progress("collection", i, total)
+            report_progress("collection", i, total, start_time=start_time)
