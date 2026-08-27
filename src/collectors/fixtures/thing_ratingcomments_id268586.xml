@@ -1,0 +1,505 @@
+<?xml version="1.0" encoding="utf-8"?><items termsofuse="https://boardgamegeek.com/xmlapi/termsofuse"><item type="boardgame" id="268586">
+         <thumbnail>https://cf.geekdo-images.com/DFeZsC973xdZ1CKUzmjAUw__small/img/TTIPiPwQpowcHjYMxtk920ZwR3c=/fit-in/200x150/filters:strip_icc()/pic4496538.jpg</thumbnail>
+      <image>https://cf.geekdo-images.com/DFeZsC973xdZ1CKUzmjAUw__original/img/Tq8bVKV-ihLPfFPpf8FjfTpXiZk=/0x0/filters:format(jpeg)/pic4496538.jpg</image>
+   	                                  				
+				<name type="primary" sortindex="1" value="6 nimmt! 25 Jahre" />
+			
+						                               				
+				<name type="alternate" sortindex="1" value="6 bere! 25 let" />
+			    				
+				<name type="alternate" sortindex="1" value="6 Nimmt 25 Years ستة باليد" />
+			    				
+				<name type="alternate" sortindex="1" value="6 qui prend +" />
+			    				
+				<name type="alternate" sortindex="1" value="6 qui Surprend" />
+			    				
+				<name type="alternate" sortindex="1" value="6. bierze! (wydanie jubileuszowe)" />
+			    				
+				<name type="alternate" sortindex="1" value="Pega em 6!: 25 Anos" />
+			    				
+				<name type="alternate" sortindex="1" value="Toma 6! 25 Aniversario." />
+			    				
+				<name type="alternate" sortindex="1" value="Vigyáz(z) 6!" />
+			    				
+				<name type="alternate" sortindex="1" value="Корова 006. Юбилейное издание" />
+			    				
+				<name type="alternate" sortindex="1" value="誰是牛頭王 25週年版" />
+			    				
+				<name type="alternate" sortindex="1" value="젝스 님트! 25주년" />
+			
+						               													<description>In 6 nimmt!, you want to score as few points as possible. To play, you shuffle the 104 number cards, lay out four cards face-up to start the four rows, then deal ten cards to each player. Each turn, players simultaneously choose and reveal a card from their hand, then add the cards to the rows, with cards being placed in ascending order based on their number; specifically, each card is placed in the row that ends with the highest number that's below the card's number. When the sixth card is placed in a row, the owner of that card claims the other five cards and the sixth card becomes the first card in a new row.
+
+In addition to a number from 1 to 104, each card has a point value. After finishing ten rounds, players tally their score and see whether the game ends., i.e., whether someone has at least 66 points. When this happens, the player with the fewest points wins!
+
+6 nimmt! works with 2-10 players, and the dynamics of gameplay change the more players that you have. One variant for the game has you use 34 cards, 44 cards, 54 cards, etc. (instead of all 104 cards) when you have three, four, five, etc. number of players. This change allows you to know which cards are in play, thereby allowing you to track which cards have been played and (theoretically) make better choices as to which card to play when.
+
+6 nimmt! 25 Jahre includes 28 additional cards to be used in a new variant. The game now lasts only two rounds, and at the start of play each player receives three special cards. Just before you have to place your number card in a row, you can choose to play one of your cards, with these cards opening a fifth row, moving a previously placed card to a different row, inserting one card between two others, allowing up to six cards in a row instead of five, blocking a row, replacing the card you played, and more.
+
+After all number cards have been played, players tally their scores, keeping any unplayed special cards, then shuffle the number cards and begin a new round. At the end of the second round, whoever has the fewest points wins.
+
+</description>
+										      	               				<yearpublished value="2019" />
+						               				<minplayers value="2" />
+						               				<maxplayers value="10" />
+						      			<poll name="suggested_numplayers" title="User Suggested Number of Players" totalvotes="48">
+			
+		<results numplayers="1">		
+					<result value="Best" numvotes="0" />
+					<result value="Recommended" numvotes="0" />
+					<result value="Not Recommended" numvotes="24" />
+				</results>					
+			
+		<results numplayers="2">		
+					<result value="Best" numvotes="0" />
+					<result value="Recommended" numvotes="12" />
+					<result value="Not Recommended" numvotes="23" />
+				</results>					
+			
+		<results numplayers="3">		
+					<result value="Best" numvotes="4" />
+					<result value="Recommended" numvotes="16" />
+					<result value="Not Recommended" numvotes="16" />
+				</results>					
+			
+		<results numplayers="4">		
+					<result value="Best" numvotes="25" />
+					<result value="Recommended" numvotes="17" />
+					<result value="Not Recommended" numvotes="1" />
+				</results>					
+			
+		<results numplayers="5">		
+					<result value="Best" numvotes="30" />
+					<result value="Recommended" numvotes="13" />
+					<result value="Not Recommended" numvotes="0" />
+				</results>					
+			
+		<results numplayers="6">		
+					<result value="Best" numvotes="24" />
+					<result value="Recommended" numvotes="17" />
+					<result value="Not Recommended" numvotes="1" />
+				</results>					
+			
+		<results numplayers="7">		
+					<result value="Best" numvotes="10" />
+					<result value="Recommended" numvotes="13" />
+					<result value="Not Recommended" numvotes="8" />
+				</results>					
+			
+		<results numplayers="8">		
+					<result value="Best" numvotes="7" />
+					<result value="Recommended" numvotes="13" />
+					<result value="Not Recommended" numvotes="11" />
+				</results>					
+			
+		<results numplayers="9">		
+					<result value="Best" numvotes="2" />
+					<result value="Recommended" numvotes="12" />
+					<result value="Not Recommended" numvotes="16" />
+				</results>					
+			
+		<results numplayers="10">		
+					<result value="Best" numvotes="3" />
+					<result value="Recommended" numvotes="11" />
+					<result value="Not Recommended" numvotes="17" />
+				</results>					
+			
+		<results numplayers="10+">		
+					<result value="Best" numvotes="0" />
+					<result value="Recommended" numvotes="1" />
+					<result value="Not Recommended" numvotes="21" />
+				</results>					
+	</poll>
+<poll-summary name="suggested_numplayers"  title="User Suggested Number of Players">
+  <result name="bestwith" value="Best with 4–6 players" />
+  <result name="recommmendedwith" value="Recommended with 3–8 players" />
+</poll-summary> 			               				<playingtime value="45" />
+						               				<minplaytime value="45" />
+						               				<maxplaytime value="45" />
+						               				<minage value="8" />
+						      			<poll name="suggested_playerage" title="User Suggested Player Age" totalvotes="9">
+			<results>		
+					<result value="2" numvotes="0" />
+					<result value="3" numvotes="0" />
+					<result value="4" numvotes="0" />
+					<result value="5" numvotes="0" />
+					<result value="6" numvotes="1" />
+					<result value="8" numvotes="7" />
+					<result value="10" numvotes="1" />
+					<result value="12" numvotes="0" />
+					<result value="14" numvotes="0" />
+					<result value="16" numvotes="0" />
+					<result value="18" numvotes="0" />
+					<result value="21 and up" numvotes="0" />
+				</results>					
+	</poll> 			      			<poll name="language_dependence" title="Language Dependence" totalvotes="4">
+			
+		<results>		
+					<result level="1" value="No necessary in-game text" numvotes="4" />
+					<result level="2" value="Some necessary text - easily memorized or small crib sheet" numvotes="0" />
+					<result level="3" value="Moderate in-game text - needs crib sheet or paste ups" numvotes="0" />
+					<result level="4" value="Extensive use of text - massive conversion needed to be playable" numvotes="0" />
+					<result level="5" value="Unplayable in another language" numvotes="0" />
+				</results>					
+	</poll> 			      			 			      				
+		 			
+
+			
+		
+					<link type="boardgamecategory" id="1002" value="Card Game" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamecategory" id="1098" value="Number" />
+		
+									
+			
+
+			      				
+		 			
+
+			
+		
+					<link type="boardgamemechanic" id="2040" value="Hand Management" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamemechanic" id="2823" value="Score-and-Reset Game" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamemechanic" id="2020" value="Simultaneous Action Selection" />
+		
+									
+			
+
+			      				
+		 			
+
+			
+		
+					<link type="boardgamefamily" id="7530" value="Animals: Cattle / Cows" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamefamily" id="5012" value="Game: 6 nimmt!" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamefamily" id="68034" value="Mechanism: Card Line" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamefamily" id="66890" value="Misc: Lowest Score Wins" />
+		
+									
+			
+
+			      				
+		 			
+
+			
+		
+					<link type="boardgameexpansion" id="228784" value="6 qui prend!: L&#039;extension vachement bien" />
+		
+									
+			
+
+			      			
+
+			      			
+
+			      			
+
+			      			
+
+			      			
+
+			      			
+
+			      				
+		 			
+
+			
+		
+					<link type="boardgameimplementation" id="432" value="Take 5" inbound="true"/>
+		
+									
+			
+
+			      	      	      				
+		 			
+
+			
+		
+					<link type="boardgamedesigner" id="7" value="Wolfgang Kramer" />
+		
+									
+			
+
+			      				
+		 			
+
+			
+		
+					<link type="boardgameartist" id="7" value="Wolfgang Kramer" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgameartist" id="11883" value="Franz Vohwinkel" />
+		
+									
+			
+
+			      	      				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="8" value="AMIGO" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="4304" value="Albi" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="34501" value="Boardgame Space" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="8845" value="G3" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="155" value="Gigamic" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="56851" value="Hachette Boardgames Benelux" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="5640" value="Kikigagne?" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="8291" value="Korea Boardgames" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="9325" value="Lifestyle Boardgames Ltd" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="7772" value="Mercurio" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="32581" value="PaperGames (III)" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="62145" value="Piatnik Distribution" />
+		
+									
+				
+		 			
+
+			
+		
+					<link type="boardgamepublisher" id="9234" value="Swan Panasia Co., Ltd." />
+		
+									
+			
+
+			
+	
+
+	
+
+	
+		<comments page="1" totalitems="3464">
+			<comment username="cwonjk7936" rating="1" value="" />
+			<comment username="Kenig" rating="1" value="" />
+			<comment username="themagiccrumpit" rating="1" value="" />
+			<comment username="Aggelosdiid" rating="1" value="" />
+			<comment username="Ferhat34" rating="1" value="Greatest Bullshit of the World" />
+			<comment username="asfhgwt" rating="1" value="Ugh." />
+			<comment username="MarekP" rating="1" value="" />
+			<comment username="YaurWall" rating="1" value="" />
+			<comment username="dxr210_bqu" rating="1.5" value="" />
+			<comment username="tndtkd" rating="1.5" value="" />
+			<comment username="drcsaba" rating="2" value="" />
+			<comment username="Playtime202" rating="2" value="" />
+			<comment username="Ms M Eeple" rating="2" value="hate it, just pointless" />
+			<comment username="Mezike" rating="2" value="Not the filler for me. Friends swear blind there is strategy to be found here but I just cannot see or connect with it." />
+			<comment username="dreameroftheshore" rating="2.5" value="" />
+			<comment username="EchidnaGamer" rating="2.6" value="Je pense que l'addition des nouvelles Cartes n'apporte Rien de nouveau Sinon quelques règles.  Le Jeux de bases est déjà super et les party games ne sont quasiment jamais fait pour les extensions. Cet édition est juste faire pour vendre des nouvelles boite. Arnaque." />
+			<comment username="olegahaha" rating="3" value="" />
+			<comment username="Niki4" rating="3" value="" />
+			<comment username="Flat00" rating="3" value="" />
+			<comment username="Pandorzecza" rating="3" value="Not for me" />
+			<comment username="kaepone" rating="3" value="Same rating and comments as Take 5. 
+Seems too random to me, and about one round too long." />
+			<comment username="EUPHOO" rating="3" value="" />
+			<comment username="lution" rating="3" value="" />
+			<comment username="dada3458" rating="3" value="" />
+			<comment username="heathbarATL" rating="3" value="(BGA) Maybe it's better in person, but in my experience it's not fun at all." />
+			<comment username="Gigue1973" rating="3" value="" />
+			<comment username="AdaWuZ" rating="3" value="" />
+			<comment username="mozg207" rating="3" value="" />
+			<comment username="fubuki04" rating="3" value="" />
+			<comment username="Blaguet_" rating="3" value="" />
+			<comment username="Maxi89" rating="3" value="" />
+			<comment username="Jingle_Bells" rating="3" value="" />
+			<comment username="abelinou" rating="3" value="" />
+			<comment username="DaSarB" rating="3" value="" />
+			<comment username="clawp1995" rating="3" value="" />
+			<comment username="DanZDK" rating="3" value="" />
+			<comment username="YuccaLaPlante" rating="3" value="" />
+			<comment username="Maluski" rating="3.91" value="" />
+			<comment username="Gordom" rating="4" value="" />
+			<comment username="dcejas" rating="4" value="" />
+			<comment username="hiyou" rating="4" value="特殊カードを3枚持って開始。裏向き一斉公開の後、自分のカードを処理する直前に使用し、引き取らないように効果を発揮させる。つまり、テンポを削ぎまくりである。" />
+			<comment username="cdlinchen" rating="4" value="" />
+			<comment username="Huntter" rating="4" value="Обменяна                                      04.03.2023" />
+			<comment username="tustus" rating="4" value="" />
+			<comment username="AJBrandon" rating="4" value="" />
+			<comment username="Etelkozi" rating="4" value="" />
+			<comment username="eddy_sterckx" rating="4" value="2023-04-22 : First play. In all its variants Take 5 is a perennial favorite of the group but a game where I can't see the point in playing it. Random as hell. And to prove it I sorted my cards high to low and always played the highest card I had. Came in 6th in a 9-player game. Next time I'm going to just shuffle the cards and play the top one every time. Only reason this is not a &quot;2&quot; is because the group likes it and I'll play along." />
+			<comment username="Francoiss" rating="4" value="" />
+			<comment username="only2ndplace" rating="4" value="" />
+			<comment username="TAsme" rating="4" value="" />
+			<comment username="sunsplitter" rating="4" value="" />
+			<comment username="IllusionKnight" rating="4" value="It's not bad but I never feel the urge to play it." />
+			<comment username="himokl" rating="4" value="" />
+			<comment username="librasquamis" rating="4" value="" />
+			<comment username="Satuu" rating="4" value="" />
+			<comment username="Yc10010103" rating="4" value="" />
+			<comment username="skywoshidxf" rating="4" value="" />
+			<comment username="Jazzavac" rating="4" value="" />
+			<comment username="Soulwolf269" rating="4" value="" />
+			<comment username="Rimus_Corosey" rating="4" value="" />
+			<comment username="silverhydra" rating="4" value="" />
+			<comment username="MarshallStaxx" rating="4" value="" />
+			<comment username="zombocos" rating="4" value="" />
+			<comment username="AKM29" rating="4" value="" />
+			<comment username="Ameen_p" rating="4" value="" />
+			<comment username="AndrewLurker" rating="4" value="" />
+			<comment username="Vernalis" rating="4" value="" />
+			<comment username="christianlafferla" rating="4" value="" />
+			<comment username="Ponchik87" rating="4" value="" />
+			<comment username="SarSam1992" rating="4" value="" />
+			<comment username="tekila24" rating="4" value="" />
+			<comment username="yzh6601" rating="4" value="" />
+			<comment username="carmenlalala" rating="4" value="" />
+			<comment username="Grilk" rating="4" value="" />
+			<comment username="corruptwraith" rating="4" value="" />
+			<comment username="biabb" rating="4" value="" />
+			<comment username="DforDido" rating="4" value="" />
+			<comment username="aquarela12" rating="4.25" value="" />
+			<comment username="Fak3" rating="4.5" value="dont like it, family loves it :-(" />
+			<comment username="elchuli" rating="4.5" value="" />
+			<comment username="PeterRozsahegyi" rating="4.5" value="" />
+			<comment username="AbbiL" rating="4.5" value="" />
+			<comment username="yani_" rating="4.5" value="" />
+			<comment username="nconc" rating="5" value="完全にマニア用ですね
+普通のニムトの方が絶対いいと思います
+遊ぶ価値がないとは言わないけどニムトの良さが潰されていると感じる
+話の種にいかがでしょうか" />
+			<comment username="baddognobiscuit" rating="5" value="*with Kate/Kris" />
+			<comment username="kalendrys" rating="5" value="" />
+			<comment username="jmathias" rating="5" value="" />
+			<comment username="Beru" rating="5" value="" />
+			<comment username="aitan_3" rating="5" value="" />
+			<comment username="MichailS" rating="5" value="" />
+			<comment username="Ben Utzer" rating="5" value="" />
+			<comment username="sf13sh" rating="5" value="" />
+			<comment username="zaubererer" rating="5" value="" />
+			<comment username="BjoernEberhard" rating="5" value="" />
+			<comment username="VeraCalvario" rating="5" value="" />
+			<comment username="salemome" rating="5" value="" />
+			<comment username="immortaldragon" rating="5" value="" />
+			<comment username="Laim" rating="5" value="Just added a short comment here, my biggest Problem with it is, that in many, many situations I have the feeling of loosing control in this game. In general that's something I'm not very happy with when playing any game. Anyway, this is still nice to play with the family." />
+			<comment username="Genesius2026" rating="5" value="" />
+			<comment username="Staffi" rating="5" value="" />
+		</comments>
+	
+	
+   
+	
+          
+</item>
+</items>

@@ -18,6 +18,7 @@ from .thing_collector import parse_thing
 from .collection_collector import parse_collection_item
 from .plays_collector import _parse_page
 from .user_collector import parse_user
+from .frame_collector import _parse_usernames
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -89,9 +90,23 @@ def test_parse_user():
     assert row["country"] == "Romania"
 
 
+def test_parse_usernames():
+    # 2026-08-26 실측 캡처(objectid=268586, "6 nimmt! 25 Jahre") — comments가
+    # rating 오름차순으로 온다는 걸 이 fixture로 확인했다(frame_collector.py
+    # 참고, page=1만 쓰면 저평가 유저로 편향됨).
+    root = ET.parse(FIXTURES / "thing_ratingcomments_id268586.xml").getroot()
+    usernames, total = _parse_usernames(root)
+
+    assert total == 3464
+    assert len(usernames) == 100
+    assert usernames[0] == "cwonjk7936"
+    assert usernames[-1] == "Staffi"
+
+
 if __name__ == "__main__":
     test_parse_thing()
     test_parse_collection_item()
     test_parse_page_plays()
     test_parse_user()
-    print("OK — 실제 BGG 응답 fixture 기준 파서 회귀 테스트 4건 통과")
+    test_parse_usernames()
+    print("OK — 실제 BGG 응답 fixture 기준 파서 회귀 테스트 5건 통과")
