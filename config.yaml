@@ -1,0 +1,4 @@
+collect:
+  countries: []        # 예: ["United States", "Germany"] — 비우면 전체 국가
+  min_year: null        # 예: 2015 — 비우면 하한 없음
+  max_year: null        # 예: 2023 — 비우면 상한 없음
