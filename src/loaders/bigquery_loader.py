@@ -32,6 +32,9 @@ from ..collectors.thing_collector import (
 )
 from ..collectors.plays_collector import FIELDS as USER_PLAY_FIELDS
 
+# user_wishlist는 wishlist.py가 collect_collections()를 wishlist=1로 재사용해
+# 만든 결과라 컬럼이 user_item과 완전히 동일하다(collection_collector.py 참고).
+
 # TODO: 컬럼 dtype이 확정되면(수집 후 실제 데이터 확인하며) STRING 일변도에서
 # INTEGER/FLOAT/DATE로 세분화. 초안에서는 결측/이상값이 흔한 원본 특성상
 # 전부 STRING으로 받고 정제는 sql/staging에서 CAST로 처리하는 쪽을 택했다.
@@ -44,6 +47,12 @@ _RAW_TABLE_FIELDS: dict[str, list[str]] = {
     "item_link": LINK_FIELDS,
     "item_rank": RANK_FIELDS,
     "user_play": USER_PLAY_FIELDS,
+    "user_wishlist": USER_ITEM_FIELDS,
+    # plays 표집 명단(scripts/collect/plays.py의 _select_sample() 산출물) — 코호트
+    # 분석의 분모(가입연도별 표본 크기)를 구하려면 "실제로 관측을 시도한 913명"
+    # 목록 자체가 필요하다. stg_user_play만으로는 플레이 기록이 0건인 유저가
+    # 누락되어 분모가 작게 잡힌다.
+    "plays_sample": ["user_id", "yearregistered"],
 }
 
 TABLE_SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
