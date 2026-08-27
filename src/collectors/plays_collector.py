@@ -19,7 +19,7 @@ import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from .bgg_client import BGGClient, BGGRequestError
+from .bgg_client import BGGClient, BGGRequestError, BGGTransientError
 from .checkpoint import append_checkpoint, load_checkpoint, report_progress
 
 logger = logging.getLogger(__name__)
@@ -54,15 +54,17 @@ def collect_plays(
     out_path: Path,
     checkpoint_path: Path,
     failed_path: Path,
-    page_size: int = 100,
+    start_time: float | None = None,
 ) -> None:
     """user_ids(샘플)를 순회하며 각 유저의 전체 플레이 로그를 페이지네이션으로
     수집한다. 완료한 user_id는 체크포인트에 기록해 재시작 시 건너뛴다.
 
-    페이지네이션 도중 영구적 오류가 나면 그 유저는 통째로 건너뛰고 failed_path에
-    기록한다 — 이미 받은 페이지까지는 out_path에 남지만(버리지 않음), 그 유저는
-    "완료"로 체크포인트되지 않으므로 나중에 필요하면 처음부터 재수집 대상으로
-    식별할 수 있다(ponytail: 페이지 단위 재개는 지금 범위 밖, 필요해지면 추가)."""
+    한 유저의 모든 페이지를 메모리에 모았다가 전부 성공했을 때만 한 번에
+    CSV에 쓴다(평균 수백 행, 최대치도 메모리 부담 없는 수준). 이렇게 하면
+    페이지네이션 도중 실패(영구/일시 오류, 또는 프로세스가 강제 종료되는 경우)해도
+    그 유저의 행이 하나도 안 쓰여 있으므로, "이미 받은 페이지 + 재시작 후 재수집한
+    전체"가 중복되는 문제 자체가 생기지 않는다 — collection/thing처럼 별도
+    dedup guard를 덧붙이는 대신 원인을 없앴다."""
     done = load_checkpoint(checkpoint_path)
     failed = load_checkpoint(failed_path)
     is_new = not out_path.exists()
@@ -79,24 +81,31 @@ def collect_plays(
 
             page = 1
             collected = 0
+            buffer: list[dict] = []
             try:
                 while True:
                     root = client.get("plays", {"username": user_id, "page": page})
                     rows, page_total = _parse_page(root, user_id)
                     if not rows:
                         break
-                    writer.writerows(rows)
+                    buffer.extend(rows)
                     collected += len(rows)
                     if collected >= page_total:
                         break
                     page += 1
+            except BGGTransientError as e:
+                # 일시적 오류로 재시도 예산 소진 — 이 유저는 무효가 아니라 "아직
+                # 못 받음"이므로 failed_path에 기록하지 않는다(다음 실행에서 재시도).
+                # buffer를 안 쓰고 버리므로 부분 행이 안 남는다.
+                logger.warning(f"유저 {user_id} plays 수집 보류(일시적 오류, 다음 실행에 재시도, page={page}): {e}")
+                continue
             except BGGRequestError as e:
                 logger.warning(f"유저 {user_id} plays 수집 제외 (page={page}): {e}")
-                f.flush()
                 append_checkpoint(failed_path, user_id)
-                report_progress("plays", i, total)
+                report_progress("plays", i, total, start_time=start_time)
                 continue
 
+            writer.writerows(buffer)
             f.flush()
             append_checkpoint(checkpoint_path, user_id)
-            report_progress("plays", i, total)
+            report_progress("plays", i, total, start_time=start_time)
