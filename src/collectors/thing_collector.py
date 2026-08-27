@@ -35,8 +35,10 @@ import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from .bgg_client import BGGClient, BGGRequestError
-from .checkpoint import append_checkpoint, load_checkpoint, report_progress
+from .bgg_client import BGGClient, BGGRequestError, BGGTransientError
+from .checkpoint import (
+    append_checkpoint, load_checkpoint, load_existing_column_values, report_progress,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -69,15 +71,6 @@ def _batched(seq: list[str], size: int):
 def _attr(item: ET.Element, tag: str, key: str = "value") -> str:
     el = item.find(tag)
     return el.get(key, "") if el is not None else ""
-
-
-def _load_existing_objectids(detail_out_path: Path) -> set[str]:
-    """재시작 시 detail_out_path에 이미 저장된 objectid를 읽어 중복 재기록을 막는다.
-    (collection_collector._load_existing_objectids와 동일 패턴)"""
-    if not detail_out_path.exists():
-        return set()
-    with detail_out_path.open(newline="", encoding="utf-8") as f:
-        return {row["objectid"] for row in csv.DictReader(f)}
 
 
 def parse_thing(item: ET.Element) -> tuple[dict, dict, list[dict], list[dict]]:
@@ -143,19 +136,21 @@ def parse_thing(item: ET.Element) -> tuple[dict, dict, list[dict], list[dict]]:
 def collect_things(
     client: BGGClient,
     object_ids: list[str],
-    detail_out_path: Path,
-    stats_out_path: Path,
-    link_out_path: Path,
-    rank_out_path: Path,
+    output_dir: Path,
     checkpoint_path: Path,
     failed_path: Path,
     start_time: float | None = None,
 ) -> None:
+    detail_out_path = output_dir / "item_details.csv"
+    stats_out_path = output_dir / "item_stats.csv"
+    link_out_path = output_dir / "item_link.csv"
+    rank_out_path = output_dir / "item_rank.csv"
+
     done = load_checkpoint(checkpoint_path)
     failed = load_checkpoint(failed_path)
     pending = [oid for oid in object_ids if oid not in done and oid not in failed]
     total_ids = len(object_ids)
-    seen_objectids = _load_existing_objectids(detail_out_path)
+    seen_objectids = load_existing_column_values(detail_out_path, "objectid")
 
     paths_fields = [
         (detail_out_path, DETAIL_FIELDS),
@@ -177,6 +172,12 @@ def collect_things(
         for batch in _batched(pending, BATCH_SIZE):
             try:
                 root = client.get("thing", {"id": ",".join(batch), "stats": 1})
+            except BGGTransientError as e:
+                # 일시적 오류로 재시도 예산 소진 — 이 배치의 id들은 무효가 아니라
+                # "아직 못 받음"이므로 failed_path에 기록하지 않는다(다음 실행이
+                # done/failed 둘 다에 없는 id로 인식해 자동 재시도한다).
+                logger.warning(f"thing 배치 수집 보류(일시적 오류, 다음 실행에 재시도) (id={','.join(batch)}): {e}")
+                continue
             except BGGRequestError as e:
                 # 배치 전체를 영구 실패로 표시 — id별로 쪼개 재시도하지 않고
                 # 배치째 건너뛴다(ponytail: 배치 재시도보다 단순, 필요해지면 세분화).

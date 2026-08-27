@@ -11,7 +11,8 @@ import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from .bgg_client import BGGClient, BGGRequestError
+from .bgg_client import BGGClient, BGGRequestError, BGGTransientError
+from .checkpoint import append_checkpoint, load_checkpoint, report_progress
 
 logger = logging.getLogger(__name__)
 
@@ -36,28 +37,49 @@ def parse_user(root: ET.Element, user_id: str) -> dict:
     }
 
 
-def collect_users(client: BGGClient, user_ids: list[str], out_path: Path) -> list[tuple[str, str]]:
-    """user_ids를 순회하며 out_path에 append. 체크포인트는 collection_collector와
-    동일 패턴(완료 user_id를 별도 파일에 기록)을 쓰면 되지만, user API는 응답이
-    가볍고 실패 시 재실행 비용이 낮아 초안에서는 생략 — 필요해지면 추가.
+def collect_users(
+    client: BGGClient,
+    user_ids: list[str],
+    out_path: Path,
+    checkpoint_path: Path,
+    failed_path: Path,
+    start_time: float | None = None,
+) -> None:
+    """user_ids를 순회하며 out_path에 append하고, 완료/실패를 체크포인트에
+    기록한다 — collection_collector/thing_collector/plays_collector와 동일한
+    시그니처·재시작 계약(checkpoint_path/failed_path/start_time)을 쓴다.
 
     영구적 오류(BGGRequestError)는 user_ids 전체를 중단시키지 않고 그 유저만
-    건너뛴다 — (user_id, 실패 사유) 튜플 리스트로 반환하니 호출부가 원하는
-    방식으로 기록(예: excluded_users.csv)하면 된다."""
-    failed: list[tuple[str, str]] = []
-    is_new = not out_path.exists()
+    건너뛰어 failed_path에 기록한다 — 실패 사유는 로그에 남는다(다른 세
+    수집기와 동일)."""
+    done = load_checkpoint(checkpoint_path)
+    failed = load_checkpoint(failed_path)
+    total = len(user_ids)
+    is_new = not out_path.exists() or out_path.stat().st_size == 0
+
     with out_path.open("a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=FIELDS)
         if is_new:
             writer.writeheader()
-        for user_id in user_ids:
+
+        for i, user_id in enumerate(user_ids, start=1):
+            if user_id in done or user_id in failed:
+                continue
+
             try:
                 root = client.get("user", {"name": user_id})
+            except BGGTransientError as e:
+                # 일시적 오류가 재시도 예산을 다 씀 — 이 유저는 무효가 아니라 "아직
+                # 못 받음"이므로 failed_path에 기록하지 않는다(다음 실행에서 재시도).
+                logger.warning(f"유저 {user_id} 수집 보류(일시적 오류, 다음 실행에 재시도): {e}")
+                continue
             except BGGRequestError as e:
                 logger.warning(f"유저 {user_id} 수집 제외: {e}")
-                failed.append((user_id, str(e)[:200]))
+                append_checkpoint(failed_path, user_id)
+                report_progress("user", i, total, start_time=start_time)
                 continue
+
             writer.writerow(parse_user(root, user_id))
             f.flush()
-            logger.info(f"유저 {user_id} 수집 완료")
-    return failed
+            append_checkpoint(checkpoint_path, user_id)
+            report_progress("user", i, total, start_time=start_time)

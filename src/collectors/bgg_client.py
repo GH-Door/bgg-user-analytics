@@ -45,7 +45,14 @@ class BGGAuthError(RuntimeError):
 
 
 class BGGRequestError(RuntimeError):
-    """재시도를 다 소진했는데도 실패한 경우."""
+    """영구적 오류(4xx, 200+<errors> 본문) — 재시도해도 결과가 안 바뀐다."""
+
+
+class BGGTransientError(BGGRequestError):
+    """일시적 오류(5xx/429/202/네트워크)가 재시도 예산을 다 쓴 경우 — 대상 자체는
+    유효할 수 있으므로 호출부는 이걸 영구 실패로 착각해 failed_path에 기록하면
+    안 된다(CLAUDE.md §1). BGGRequestError를 상속해 기존 `except BGGRequestError`
+    호출부는 그대로 잡되, 구분이 필요한 곳만 이 서브클래스를 먼저 잡는다."""
 
 
 @dataclass
@@ -94,7 +101,13 @@ class BGGClient:
                 )
 
             if resp.status_code == 429:
-                retry_after = float(resp.headers.get("Retry-After", 2 ** attempt))
+                # Retry-After는 초 단위 정수 또는 HTTP-date(RFC 9110) 둘 다 올 수 있다.
+                # date 형식은 float()이 못 읽어 ValueError로 전체 수집이 죽는다 —
+                # 그 경우 그냥 지수 백오프값으로 대체.
+                try:
+                    retry_after = float(resp.headers.get("Retry-After", 2 ** attempt))
+                except ValueError:
+                    retry_after = float(2 ** attempt)
                 logger.warning(
                     f"{endpoint} 요청 429(rate limit) — {attempt}/{self.max_retries}회차, "
                     f"{retry_after}초 대기 (params={params})"
@@ -161,7 +174,7 @@ class BGGClient:
             return root
 
         logger.error(f"{endpoint} 요청이 {self.max_retries}회 재시도 후에도 실패 (params={params})")
-        raise BGGRequestError(
-            f"{endpoint} 요청이 {self.max_retries}회 재시도 후에도 실패했습니다. "
-            f"params={params}"
+        raise BGGTransientError(
+            f"{endpoint} 요청이 {self.max_retries}회 재시도 후에도 실패했습니다(일시적 오류로 "
+            f"추정 — 영구 제외하지 말고 다음 실행에서 재시도할 것). params={params}"
         )
