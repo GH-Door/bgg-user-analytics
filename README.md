@@ -9,7 +9,7 @@
 
 <p>
   <img src="https://img.shields.io/badge/Status-In%20Progress-yellow?style=flat-square">
-  <img src="https://img.shields.io/badge/Python%203.9%2B-3776AB?style=flat-square&logo=python&logoColor=white">
+  <img src="https://img.shields.io/badge/Python%203.11%2B-3776AB?style=flat-square&logo=python&logoColor=white">
   <img src="https://img.shields.io/badge/BigQuery-4285F4?style=flat-square&logo=googlebigquery&logoColor=white">
   <img src="https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas&logoColor=white">
   <img src="https://img.shields.io/badge/SciPy-8CAAE6?style=flat-square&logo=scipy&logoColor=white">
@@ -39,7 +39,7 @@ BoardGameGeek(BGG)은 세계 최대 보드게임 커뮤니티로, 유저별 소�
 2. 가입 연도가 다른 유저 코호트는 리텐션 양상이 다른가?
 3. 위시리스트만 쌓이고 실제로는 플레이되지 않는 게임의 공통 특성은 무엇인가?
 
-질문별 지표·산출 위치·의사결정 액션 매핑은 [PLAN.md §2](PLAN.md#2-분석-질문--지표--액션-매핑표) 참고.
+질문별 지표·산출 위치·의사결정 액션 매핑은 상세 설계 문서(비공개, 프로젝트 완료 후 공개 예정)에 정리되어 있다.
 
 ---
 
@@ -47,31 +47,49 @@ BoardGameGeek(BGG)은 세계 최대 보드게임 커뮤니티로, 유저별 소�
 
 ```
 bgg/
-├── README.md              # 이 문서
-├── PLAN.md                # 상세 설계 · 수집 결정 로그 · 지표 정의 · 주차별 TODO
+├── README.md                 # 이 문서
+├── scripts/                   # 실행 진입점 — "무엇을 수집/적재할지"
+│   ├── collect/                #   4단계 수집 드라이버(API별 1:1 대응)
+│   │   ├── user.py             #     1단계: user API 스크리닝(표본 추출)
+│   │   ├── collection.py       #     2단계: collection API 본수집(own=1)
+│   │   └── thing.py            #     3단계: thing API 아이템 상세(배치 20개)
+│   ├── collect_phase4_plays.py #   4단계: plays API 표본 플레이로그(리네이밍 예정)
+│   ├── _common.py              #   시작시각 영속화 + 로깅 설정 공용 유틸
+│   └── load_fallback_2024.py   #   2024 데이터 → BQ 1회성 적재(재수집 완료 후 제거 예정)
 ├── src/
-│   ├── collectors/         # BGG XML API 수집 모듈
-│   │   ├── bgg_client.py   # 인증/레이트리밋/재시도 공통 HTTP 계층
-│   │   ├── user_collector.py
-│   │   ├── collection_collector.py
-│   │   ├── thing_collector.py
-│   │   ├── plays_collector.py   # 실제 플레이 로그 기반 코호트 (신규)
-│   │   ├── checkpoint.py   # 체크포인트/진행률 공용 유틸
-│   │   ├── fixtures/       # 파서 회귀 테스트용 실제 BGG 응답 샘플
-│   │   ├── test_bgg_client.py   # HTTP 계층 셀프 체크
-│   │   └── test_parsers.py      # 파싱 로직 회귀 테스트
+│   ├── config.py               # 경로 공용 상수(DATA_DIR/LOGS_DIR) + ensure_dirs()
+│   ├── collectors/              # "어떻게 수집할지" — HTTP 호출·파싱·체크포인트
+│   │   ├── bgg_client.py        #   인증/레이트리밋/재시도 공통 HTTP 계층
+│   │   ├── checkpoint.py        #   체크포인트 파일 I/O + 진행률/ETA 로깅
+│   │   ├── filters.py           #   수집 대상 국가/가입연도 필터(선택)
+│   │   ├── user_collector.py / collection_collector.py / thing_collector.py / plays_collector.py
+│   │   ├── fixtures/            #   파서 회귀 테스트용 실제 BGG 응답 샘플
+│   │   ├── test_bgg_client.py   #   HTTP 계층 셀프 체크
+│   │   └── test_parsers.py      #   파싱 로직 회귀 테스트
 │   └── loaders/
-│       └── bigquery_loader.py   # CSV → BigQuery raw 적재
+│       ├── bigquery_loader.py   #   CSV → BigQuery raw 적재
+│       └── fallback_adapter.py  #   2024 스키마 → 신규 스키마 변환(재수집 완료 후 제거 예정)
 ├── sql/
-│   ├── staging/            # raw → 정제/정규화
-│   └── marts/               # 퍼널 · 코호트 · 세그먼트 · 트렌드
-├── jupyter/                 # EDA, 가설 검증 노트북
-├── docs/                    # 지표 정의서, 데이터 사전, 품질 리포트
-├── dashboard/                # Looker Studio 연동 메모
-└── data/                     # 로컬 캐시 + 체크포인트 (git 제외)
+│   ├── staging/                 # raw → 정제/정규화
+│   │   ├── preprocessing.sql
+│   │   └── data_quality_checks.sql
+│   └── marts/                    # 퍼널 · 코호트 · 세그먼트 · 트렌드(예정)
+├── jupyter/                      # EDA, 가설 검증 노트북(예정)
+├── docs/                         # 지표 정의서, 표본 설계, 데이터 품질/비교 리포트
+└── data/                         # 수집·적재 산출물(재현 가능한 것만, git 제외)
 ```
 
-`src/` 아래 모듈만 재사용 가능한 코드로 두는 이유: 나중에 여유가 되면 추천 시스템(`src/features/`, `src/models/`)을 얹을 때 `bgg_mart`의 산출물을 그대로 소비하는 새 서브패키지만 추가하면 되고, 지금 있는 코드는 안 건드려도 된다 — 지금 당장 빈 폴더를 만들어두진 않는다.
+`scripts/`(무엇을 할지, 얇은 오케스트레이션)와 `src/collectors/`(어떻게 할지, 재사용 가능한 파싱/HTTP/체크포인트 로직)를 분리한 이유: `src/collectors/`의 파싱 함수는 `test_parsers.py`가 API 호출 없이 직접 단위 테스트하고, `src/loaders/`도 이 모듈들을 그대로 import해서 쓴다 — 로직이 스크립트 안에 갇혀 있으면 둘 다 불가능하다.
+
+### 실행 순서 (4단계, 순서대로)
+
+```bash
+uv run python -m scripts.collect.user          # 1. 스크리닝(표본 추출 + user API)
+uv run python -m scripts.collect.collection     # 2. 본수집(collection API, own=1)
+uv run python -m scripts.collect.thing          # 3. 아이템 상세(thing API, 배치 20개)
+uv run python -m scripts.collect_phase4_plays   # 4. 표본 플레이로그(plays API)
+```
+각 단계는 체크포인트 기반이라 중단 후 재실행해도 이어서 진행된다. 국가/가입연도로 수집 대상을 제한하고 싶다면 저장소 루트의 `config.yaml`(`collect.countries`/`min_year`/`max_year`)을 채운다.
 
 ---
 
@@ -90,10 +108,10 @@ uv run python -m src.collectors.test_bgg_client
 uv run python -m src.collectors.test_parsers
 ```
 
-BGG API 토큰 발급 방법, GCP 인증, 전체 실행 순서는 [PLAN.md §12](PLAN.md#12-실행-방법) 참고.
+BGG API 토큰은 [BGG XML API 안내](https://boardgamegeek.com/using_the_xml_api)에서 등록 후 승인 시 발급된다. GCP는 `gcloud auth application-default login`으로 인증한다(서비스 계정 키를 쓰는 경우 `.env.example` 참고). 전체 실행 순서는 위 "실행 순서" 참고.
 
 ---
 
 ## 📄 상세 문서
 
-수집 설계 결정 로그(BGG API 인증 정책 대응, 기존 코드 결함 수정 내역), 데이터 모델, 지표 정의서, 알려진 한계, 주차별 TODO는 **[PLAN.md](PLAN.md)** 에 정리되어 있습니다.
+수집 설계 결정 로그(BGG API 인증 정책 대응, 기존 코드 결함 수정 내역), 데이터 모델, 지표 정의서, 알려진 한계, 주차별 TODO는 별도 설계 문서(비공개, 프로젝트 완료 후 공개 예정)에 정리되어 있습니다. 실제 수집 과정에서 겪은 문제와 해결 과정은 `TROUBLESHOOTING.md`(마찬가지로 프로젝트 완료 후 공개)에 기록되어 있습니다.

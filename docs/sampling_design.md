@@ -48,7 +48,7 @@ n  = n0 / (1 + (n0-1)/N)
 
 ## 진행 순서 (트랙 B)
 
-1. **스크리닝 패스**: 3,000명에 대해 가벼운 `user` API만 호출 → 유효 계정 수·실제 가입연도 분포 확인 (`scripts/collect_phase1_screening.py`)
+1. **스크리닝 패스**: 3,000명에 대해 가벼운 `user` API만 호출 → 유효 계정 수·실제 가입연도 분포 확인 (`scripts/collect/user.py`)
 2. **본수집 패스**: 스크리닝에서 유효했던 계정에 대해 `collection`(own=1) API 호출 → `item_info`/`user_item` 갱신
 3. **thing 배치 수집**: 위에서 나온 `objectid` 전체에 대해 `thing` API(20개씩 배치) 호출 → `item_details`/`item_stats`/`item_link`/`item_rank`
 4. **plays 표본**: 본수집 대상 중 하위표본(가입연도 비중 유지되는 SRS 특성상 별도 재추출 불필요, 전체 또는 무작위 축소)에 대해서만 `plays` API 호출 — 페이지네이션 비용이 커서 별도 관리

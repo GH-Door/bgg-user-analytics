@@ -1,10 +1,18 @@
-# data
-data/
+# data — 폴더 자체는 git에 남겨둔다(fresh clone에서 존재를 보장), 내용물만 제외.
+# "data/"로 통째로 막으면 !data/.gitkeep 같은 예외도 안 먹힌다(디렉터리째 순회
+# 제외됨) — data/*로 내용물만 막아야 예외 패턴이 작동한다.
+data/*
+!data/.gitkeep
 *.csv
 
 # logs
 logs/
+logs/*
+!logs/.gitkeep
 *.log
+
+# data
+data/
 
 # documents
 CLAUDE.md
@@ -26,3 +34,6 @@ __pycache__/
 
 # OT files
 OT/
+
+# CLAUDE
+.claude/
