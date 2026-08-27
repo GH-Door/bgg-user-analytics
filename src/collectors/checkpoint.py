@@ -17,11 +17,23 @@
 """
 from __future__ import annotations
 
+import csv
 import logging
 import time
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+
+def load_existing_column_values(path: Path, column: str) -> set[str]:
+    """path가 CSV면 그 column의 값을 전부 읽어 set으로 반환한다. 재시작 시
+    이미 출력 파일에 쓰여 있는 값(objectid, user_id 등)을 미리 알아야 크래시
+    윈도우로 인한 중복 기록을 막을 수 있다 — collection/thing/user 세 수집기가
+    각자 구현하던 동일 패턴을 여기 하나로 모은다."""
+    if not path.exists():
+        return set()
+    with path.open(newline="", encoding="utf-8") as f:
+        return {row[column] for row in csv.DictReader(f)}
 
 
 def load_checkpoint(path: Path) -> set[str]:

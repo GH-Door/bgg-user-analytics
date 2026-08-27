@@ -32,8 +32,10 @@ import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from .bgg_client import BGGClient, BGGRequestError
-from .checkpoint import append_checkpoint, load_checkpoint, report_progress
+from .bgg_client import BGGClient, BGGRequestError, BGGTransientError
+from .checkpoint import (
+    append_checkpoint, load_checkpoint, load_existing_column_values, report_progress,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -107,27 +109,30 @@ def parse_collection_item(item: ET.Element) -> tuple[dict, dict]:
     return item_row, user_item_row
 
 
-def _load_existing_objectids(item_out_path: Path) -> set[str]:
-    """재시작 시 item_out_path에 이미 저장된 objectid를 읽어 중복 재기록을 막는다."""
-    if not item_out_path.exists():
-        return set()
-    with item_out_path.open(newline="", encoding="utf-8") as f:
-        return {row["objectid"] for row in csv.DictReader(f)}
-
-
 def collect_collections(
     client: BGGClient,
     user_ids: list[str],
-    item_out_path: Path,
-    user_item_out_path: Path,
+    output_dir: Path,
     checkpoint_path: Path,
     failed_path: Path,
-    own: int = 1,
+    own: int | None = 1,
+    wishlist: int | None = None,
+    item_filename: str = "item_info.csv",
+    user_item_filename: str = "user_item.csv",
     start_time: float | None = None,
 ) -> None:
+    """own(기본) 또는 wishlist 중 하나만 API에 보낸다 — 위시리스트 수집 시
+    own=1과 wishlist=1을 같이 보내면 "소유하면서 동시에 위시"인 교집합만
+    돌아와 사실상 빈 데이터가 된다(own/wishlist는 상호 배타적 상태이므로).
+    출력 파일명을 바꿀 수 있게 열어둔 건 같은 함수를 위시 수집에도 재사용해
+    새 파서를 안 만들기 위함 — item_info/user_item과 섞이지 않도록 호출부가
+    다른 파일명을 지정한다."""
+    item_out_path = output_dir / item_filename
+    user_item_out_path = output_dir / user_item_filename
+
     done = load_checkpoint(checkpoint_path)
     failed = load_checkpoint(failed_path)
-    seen_objectids = _load_existing_objectids(item_out_path)
+    seen_objectids = load_existing_column_values(item_out_path, "objectid")
 
     item_is_new = not item_out_path.exists()
     user_item_is_new = not user_item_out_path.exists()
@@ -147,10 +152,16 @@ def collect_collections(
             if user_id in done or user_id in failed:
                 continue
 
+            params = {"username": user_id, "stats": 1}
+            if wishlist is not None:
+                params["wishlist"] = wishlist
+            elif own is not None:
+                params["own"] = own
             try:
-                root = client.get("collection", {
-                    "username": user_id, "own": own, "stats": 1,
-                })
+                root = client.get("collection", params)
+            except BGGTransientError as e:
+                logger.warning(f"유저 {user_id} 컬렉션 수집 보류(일시적 오류, 다음 실행에 재시도): {e}")
+                continue
             except BGGRequestError as e:
                 logger.warning(f"유저 {user_id} 컬렉션 수집 제외: {e}")
                 append_checkpoint(failed_path, user_id)
