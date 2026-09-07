@@ -35,5 +35,8 @@ __pycache__/
 # OT files
 OT/
 
+# 발표/작업용 슬라이드
+*.pptx
+
 # CLAUDE
 .claude/
