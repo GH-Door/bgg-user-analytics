@@ -40,6 +40,9 @@ TABLE_TO_CSV = {
     "user_play": "user_play.csv",
     "user_wishlist": "user_wishlist.csv",
     "plays_sample": "plays_sample_users.csv",
+    "user_info_v2": "user_info_v2.csv",
+    "item_info_v2": "item_info_v2.csv",
+    "user_item_v2": "user_item_v2.csv",
 }
 
 

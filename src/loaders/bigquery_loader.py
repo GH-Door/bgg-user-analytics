@@ -48,6 +48,11 @@ _RAW_TABLE_FIELDS: dict[str, list[str]] = {
     "item_rank": RANK_FIELDS,
     "user_play": USER_PLAY_FIELDS,
     "user_wishlist": USER_ITEM_FIELDS,
+    # 신규 표집틀 검증표본(scripts/collect/verify_frame.py, 600명) — 기존
+    # user_list.csv 표집틀과 컬럼이 완전히 동일해 같은 FIELDS 상수를 재사용한다.
+    "user_info_v2": USER_INFO_FIELDS,
+    "item_info_v2": ITEM_FIELDS,
+    "user_item_v2": USER_ITEM_FIELDS,
     # plays 표집 명단(scripts/collect/plays.py의 _select_sample() 산출물) — 코호트
     # 분석의 분모(가입연도별 표본 크기)를 구하려면 "실제로 관측을 시도한 913명"
     # 목록 자체가 필요하다. stg_user_play만으로는 플레이 기록이 0건인 유저가

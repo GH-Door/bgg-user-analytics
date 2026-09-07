@@ -201,6 +201,45 @@ SELECT
 FROM `bgg_raw.plays_sample`;
 
 -- ============================================================
+-- stg_user_info_v2 / stg_user_item_v2 — 신규 표집틀 검증표본(600명,
+-- scripts/collect/verify_frame.py). 기존 stg_user_info/stg_user_item과 컬럼이
+-- 동일해 같은 캐스팅을 그대로 적용한다. 용도는 두 가지:
+--   1. 기존 표집틀(user_list.csv 유래)과 가입연도·활동량 분포 비교(프레임 편향 실측)
+--   2. 2025~2026 코호트 보강(기존 표집틀엔 이 두 해 가입자가 0명이었음)
+-- item_info_v2는 별도 staging을 두지 않는다 — 게임 상세(복잡도 등)는 이미
+-- stg_item_stats에 objectid 기준으로 대부분 커버되어 그대로 JOIN해 쓴다.
+-- ============================================================
+CREATE OR REPLACE TABLE `bgg_staging.stg_user_info_v2` AS
+SELECT
+  user_id,
+  SAFE_CAST(yearregistered AS INT64) AS yearregistered,
+  SAFE_CAST(lastlogin AS DATE) AS lastlogin,
+  country,
+  stateorprovince,
+  SAFE_CAST(traderating AS INT64) AS traderating
+FROM `bgg_raw.user_info_v2`;
+
+CREATE OR REPLACE TABLE `bgg_staging.stg_user_item_v2`
+CLUSTER BY objectid AS
+SELECT
+  user_id,
+  objectid,
+  SAFE_CAST(NULLIF(user_rating, 'N/A') AS FLOAT64) AS user_rating,
+  SAFE_CAST(numplays AS INT64) AS numplays,
+  comment,
+  SAFE_CAST(NULLIF(own, '') AS INT64) = 1 AS own,
+  SAFE_CAST(NULLIF(prevowned, '') AS INT64) = 1 AS prevowned,
+  SAFE_CAST(NULLIF(fortrade, '') AS INT64) = 1 AS fortrade,
+  SAFE_CAST(NULLIF(want, '') AS INT64) = 1 AS want,
+  SAFE_CAST(NULLIF(wanttoplay, '') AS INT64) = 1 AS wanttoplay,
+  SAFE_CAST(NULLIF(wanttobuy, '') AS INT64) = 1 AS wanttobuy,
+  SAFE_CAST(NULLIF(wishlist, '') AS INT64) = 1 AS wishlist,
+  SAFE_CAST(NULLIF(wishlistpriority, '') AS INT64) AS wishlistpriority,
+  SAFE_CAST(NULLIF(preordered, '') AS INT64) = 1 AS preordered,
+  SAFE_CAST(NULLIF(lastmodified, '') AS DATETIME) AS lastmodified
+FROM `bgg_raw.user_item_v2`;
+
+-- ============================================================
 -- link_type별 뷰 (PLAN.md §5에서 계획한 4개: category/mechanic/designer/publisher)
 -- ============================================================
 CREATE OR REPLACE VIEW `bgg_staging.item_category` AS
