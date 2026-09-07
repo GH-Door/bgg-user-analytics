@@ -5,9 +5,10 @@
 --      fixtures/user_fagentu007.xml에 <yearregistered value="2014"/>뿐).
 --      그래서 원래 계획한 "월별 코호트"는 애초에 불가능하고, 여기는
 --      "가입연도 코호트 × 연 단위 경과(year_offset)"로 리텐션을 본다.
---   2. 이 마트의 모집단은 전체 2,954명이 아니라 plays 표집 913명뿐이다
---      (docs/sampling_design.md의 코호트별 층화 표본). 분모를 stg_user_info
---      전체가 아니라 stg_plays_sample로 잡는 이유가 이거다.
+--   2. 이 마트의 모집단은 전체 3,000명이 아니라 plays 표집 1,065명뿐이다
+--      (docs/sampling_design.md의 코호트별 층화 표본. 재수집 이후 1,065명으로
+--      갱신됨 — 실측: 01.EDA 1-6). 분모를 stg_user_info 전체가 아니라
+--      stg_plays_sample로 잡는 이유가 이거다.
 --
 -- SQL은 여기까지만 한다 — "코호트연도 × 경과년수 → 활성유저수"라는 **긴
 -- 포맷(long format)**의 집계표를 만드는 게 SQL의 일(GROUP BY 2개, 어렵지 않음).
