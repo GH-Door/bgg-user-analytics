@@ -1,6 +1,11 @@
 """
 트랙 B — 2차 본수집 패스 (collection API).
 
+09/08 확인: 대체됨. scripts/collect/user.py와 같은 이유(user_list.csv 표집틀
+폐기)로, 실제 본수집은 scripts/collect/main_frame.py가 collect_collections()를
+직접 재사용해서 처리한다(국가/가입연도 필터도 main_frame.py에 옮겨 붙임).
+이 파일은 초기 설계 단계의 기록으로 남겨두고 더 이상 실행하지 않는다.
+
 1차 스크리닝(scripts/collect/user.py)에서 유효했던 계정(data/user_info.csv,
 2,954명)을 대상으로 collection API(own=1)를 호출해 item_info/user_item을 채운다.
 
@@ -31,10 +36,9 @@ from scripts._common import get_or_set_started_at, setup_logging
 from src.collectors.bgg_client import BGGClient
 from src.collectors.collection_collector import collect_collections
 from src.collectors.filters import filter_users, load_filter_from_config
+from src.config import DATA_DIR
 
 load_dotenv()
-
-DATA_DIR = Path("data")
 
 USER_INFO_PATH = DATA_DIR / "user_info.csv"
 CHECKPOINT_PATH = DATA_DIR / "collection_checkpoint.txt"

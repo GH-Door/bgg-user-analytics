@@ -30,10 +30,9 @@ from dotenv import load_dotenv
 from scripts._common import get_or_set_started_at, setup_logging
 from src.collectors.bgg_client import BGGClient
 from src.collectors.plays_collector import collect_plays
+from src.config import DATA_DIR
 
 load_dotenv()
-
-DATA_DIR = Path("data")
 
 USER_INFO_PATH = DATA_DIR / "user_info.csv"
 SAMPLE_PATH = DATA_DIR / "plays_sample_users.csv"

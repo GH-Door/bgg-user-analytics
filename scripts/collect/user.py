@@ -1,6 +1,11 @@
 """
 트랙 B — 1차 스크리닝 패스 (user API).
 
+09/08 확인: 대체됨. user_list.csv 표집틀이 가입연도 시간 절단 편향으로
+폐기되면서, 실제 본표본은 이 스크립트 대신 scripts/collect/main_frame.py가
+frame_candidates.csv에서 뽑는다(docs/sampling_design.md 업데이트 참고).
+이 파일은 초기 설계 단계의 기록으로 남겨두고 더 이상 실행하지 않는다.
+
 후보 풀(data/user_list.csv, 194,643명)에서 무작위 3,000명을 뽑아 가벼운 user API만
 호출한다. 표본 크기·SRS를 쓰는 이유는 docs/sampling_design.md 참고.
 
@@ -28,10 +33,10 @@ from dotenv import load_dotenv
 from scripts._common import get_or_set_started_at, setup_logging
 from src.collectors.bgg_client import BGGClient
 from src.collectors.user_collector import collect_users
+from src.config import DATA_DIR
 
 load_dotenv()
 
-DATA_DIR = Path("data")
 SEED = 20260818
 SCREENING_N = 3000
 

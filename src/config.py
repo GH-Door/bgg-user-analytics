@@ -6,10 +6,13 @@ ensure_dirs()를 호출해 만든다. 안 만들면 첫 파일 쓰기에서 File
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
-DATA_DIR = Path("data")
+# BGG_DATA_DIR을 지정하면 수집 결과를 다른 폴더(예: data/after)에 바로 쓸 수 있다.
+# 안 지정하면 기존과 동일하게 "data"를 쓴다.
+DATA_DIR = Path(os.environ.get("BGG_DATA_DIR", "data"))
 LOGS_DIR = Path("logs")
 
 
