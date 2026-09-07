@@ -1,16 +1,17 @@
 """
-트랙 B — 표집틀 보강 패스 (thing API의 ratingcomments).
+트랙 C — 신규 표집틀 구축 패스 (thing API의 ratingcomments).
 
 user_list.csv(2024년 팀 프로젝트 유래)는 표집틀 시점이 2024-07에 고정돼
-2025~2026 가입자가 표본에 전혀 없다(docs/sampling_validity.md 참고). 이미
-보유한 50,351개 objectid 중 복잡도(averageweight) 5분위 × 20개 = 100개를
-무작위로 뽑아, 그 게임들을 평가한 유저명을 thing API의 ratingcomments로
-모으면 출처가 문서화된 신규 표집틀을 얻는다.
+2025~2026 가입자가 표본에 전혀 없다(docs/sampling_design.md 참고). 이 문제를
+100개 게임으로 검증(verify_frame.py, 600명)한 뒤, 이제 이 방식 자체를
+본표본으로 승격한다 — user_list.csv는 이후 아예 참조하지 않는다.
 
-용도는 두 가지뿐이다 — 이 표집틀 자체를 주 표본으로 쓰지 않는다:
-  1. user_list.csv와 복잡도/가입연도 분포를 비교해 편향을 실측 검증
-  2. 여기서 무작위 600명을 뽑아 user+collection API로 실제 데이터 확보
-     (2025-26 코호트 보강, 별도 후속 스크립트)
+기존(2,862명) 수집으로 이미 보유한 게임 카탈로그(item_stats.csv, BGG_DATA_DIR
+무관하게 참고용으로 계속 씀 — §게임 카탈로그는 유저 명단과 달리 시간 편향이
+없다, 프로젝트 대화 기록 참고) 중 복잡도(averageweight) 5분위 × 40개 = 200개를
+무작위로 뽑아, 그 게임들을 평가한 유저명을 thing API의 ratingcomments로
+모은다. 이렇게 얻은 frame_candidates.csv에서 main_frame.py가 스크리닝
+표본(3,000명)을 뽑아 본수집으로 이어간다.
 
 복잡도 5분위로 게임을 층화하는 이유: 무작위로 게임을 뽑으면 표집틀 자체가
 다시 "인기/헤비 게임 평가자" 쪽으로 쏠릴 수 있다 — 게임 층화로 이 위험을
@@ -31,7 +32,7 @@ from src.config import DATA_DIR
 load_dotenv()
 
 SEED = 20260826
-GAMES_PER_QUINTILE = 20
+GAMES_PER_QUINTILE = 40
 ITEM_STATS_PATH = DATA_DIR / "item_stats.csv"
 OUT_PATH = DATA_DIR / "frame_candidates.csv"
 
