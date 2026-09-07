@@ -16,7 +16,7 @@
 | 2024 파일 (행수) | 신규 테이블 | 관계 |
 |---|---|---|
 | `user_info.csv` (10,754) | `user_info` | 컬럼 축소 (§2-1) |
-| `user_list.csv` (194,643) | (수집 대상 목록, 그대로 재사용 예정) | 동일 역할 |
+| `user_list.csv` (194,643) | ~~(수집 대상 목록, 그대로 재사용 예정)~~ | **09/08 업데이트: 폐기됨.** 가입연도 시간 절단 편향이 실측 확인돼(`docs/sampling_design.md`), `frame.py`가 만든 독립 표집틀(thing `ratingcomments` 기반)로 완전히 교체. `user_list.csv`는 최종 수집에 전혀 쓰이지 않음 |
 | `user_item.csv` (1,827,152) | `user_item` + `item_info` | collection API 응답을 2개 테이블로 분리 (동일). 최초 `wc -l` 집계치(197만)는 `comment` 필드 내 개행 때문에 부정확했음 — `csv`/`pandas`로 재확인(08/16, `fallback_adapter.py` 테스트 중 발견) |
 | `item_info.csv` (52,290) | `item_info` | 거의 동일 + `rank`가 대표 1건만 (subtype별은 `item_rank`로 분리) |
 | `item_details.csv` (29,449) | `item_details` + `item_stats` + `item_link` (신규 정규화) | link 컬럼 5개를 long 포맷 1개로 통합 |
@@ -99,6 +99,6 @@
 
 ## 5. 참고: 2024 노트북에서 발견한 세그먼트 정의 방식 (참고용, 채택 안 함)
 
-`jupyter/Hard_user/EDA.ipynb`에서 헤비유저("hard_user")를 유저별 **평점 개수(`rating_count`) 11~109건** 구간으로 정의했다 (`hard_user['rating_count'].transform('count')` 후 필터링). 이번 프로젝트는 PLAN.md §8에서 `numplays` 총합 기준 3분위로 세그먼트를 정의하기로 했는데, 이는 의도적으로 다른 기준이다 — 평점 개수는 "얼마나 많은 게임을 접했는가"에 가깝고, `numplays`는 "실제로 얼마나 많이 플레이했는가"에 더 가깝다고 판단했기 때문. 두 정의 중 무엇이 더 적절한지는 실제 데이터 분포를 보고 `docs/metrics.md`에서 최종 확정한다.
+`jupyter/Hard_user/EDA.ipynb`에서 헤비유저("hard_user")를 유저별 **평점 개수(`rating_count`) 11~109건** 구간으로 정의했다 (`hard_user['rating_count'].transform('count')` 후 필터링). 이번 프로젝트는 PLAN.md §8에서 `numplays` 총합 기준 3분위로 세그먼트를 정의하기로 했는데, 이는 의도적으로 다른 기준이다 — 평점 개수는 "얼마나 많은 게임을 접했는가"에 가깝고, `numplays`는 "실제로 얼마나 많이 플레이했는가"에 더 가깝다고 판단했기 때문. 두 정의 중 무엇이 더 적절한지는 실제 데이터 분포를 보고 최종 확정했다(09/08 업데이트: 별도 `docs/metrics.md` 문서 대신 `sql/marts/segmentation.sql` 주석에 직접 반영 — `numplays` 3분위, 소프트유저/미들유저/하드유저로 채택).
 
 또한 2024 노트북은 동명 게임 처리를 위해 `item_info`를 `name` 기준으로 `drop_duplicates`했다(연도 최신 것만 남김). 신규 설계는 애초에 `objectid`가 유일 키이므로 이 문제 자체가 발생하지 않는다 — PLAN.md §4-4 결함 #7과 같은 맥락.
