@@ -38,5 +38,8 @@ OT/
 # 발표/작업용 슬라이드
 *.pptx
 
+# 노션 등 외부 문서용으로 뽑은 차트(README에서 안 씀, assets/ 정식 산출물과 구분)
+assets/nb/
+
 # CLAUDE
 .claude/
