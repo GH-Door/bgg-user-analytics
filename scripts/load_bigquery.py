@@ -17,7 +17,8 @@ import os
 from dotenv import load_dotenv
 from google.cloud import bigquery
 
-from src.config import DATA_DIR
+from scripts._common import get_or_set_started_at, setup_logging
+from src.config import DATA_DIR, StagePaths
 from src.loaders.bigquery_loader import ensure_dataset, load_csv_to_raw
 
 load_dotenv()
@@ -47,10 +48,10 @@ TABLE_TO_CSV = {
 
 
 def main() -> None:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S",
-    )
+    paths = StagePaths("load_bigquery")
+    started_at = get_or_set_started_at(paths.started_at)
+    setup_logging(started_at, "load_bigquery")
+
     client = bigquery.Client(project=PROJECT_ID)
     ensure_dataset(client, PROJECT_ID, DATASET_RAW)
 
