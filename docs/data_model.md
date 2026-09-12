@@ -37,8 +37,8 @@ bgg_mart    — 퍼널·코호트·세그먼트 등 분석 결과. 노트북이 
 | `user_item` | 495,346 | `scripts/collect/collection.py` | 유저×게임 컬렉션(own=1) |
 | `user_item_v2` | 264,738 | `scripts/collect/verify_frame.py` | 검증표본 600명의 컬렉션(own=1) |
 | `user_wishlist` | 56,798 | `scripts/collect/wishlist.py` | 유저×게임 개인 위시리스트(wishlist=1) |
-| `user_play` | 520,892 | `scripts/collect_phase4_plays.py` | plays 표본(913명) 실제 플레이 로그 |
-| `plays_sample` | 913 | `scripts/collect_phase4_plays.py` | plays 표집 대상 명단(코호트 분모용) |
+| `user_play` | 520,892 | `scripts/collect_phase4_plays.py` | plays 표본(1,065명) 실제 플레이 로그 |
+| `plays_sample` | 1,065 | `scripts/collect_phase4_plays.py` | plays 표집 대상 명단(코호트 분모용) |
 
 ### 컬럼 의미
 
@@ -108,7 +108,7 @@ bgg_mart    — 퍼널·코호트·세그먼트 등 분석 결과. 노트북이 
 **`plays_sample`** — 코호트 분모용 명단(플레이 0건 유저도 포함해야 분모가 안 왜곡됨)
 | 컬럼 | 의미 |
 |---|---|
-| `user_id`, `yearregistered` | plays 표집 대상 913명 |
+| `user_id`, `yearregistered` | plays 표집 대상 1,065명 |
 
 ---
 

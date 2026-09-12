@@ -18,6 +18,7 @@ data/
 CLAUDE.md
 TROUBLESHOOTING.md
 PLAN.md
+README.md.backup
 
 # secrets
 .env
