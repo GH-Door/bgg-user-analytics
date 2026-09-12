@@ -2,6 +2,8 @@
 
 **작성일**: 2026-08-28 · BigQuery 프로젝트 `bgg-user-analytics`의 raw/staging/mart 3계층 스키마 전체를 다룬다. 표의 모든 컬럼·행수는 `INFORMATION_SCHEMA` 실측 기준(추정치 아님).
 
+> **09/12 정정**: 작성 시점(08/28) 이후 위시리스트 보강 수집(`scripts/collect/wishlist.py`)과 후속 본수집이 이어져 1절의 raw 행수 표가 그새 크게 늘었다. 아래 표는 `bgg_raw.__TABLES__` 재조회로 갱신한 최신 값이다(README.md의 "데이터 규모" 표와 동일 소스·동일 수치).
+
 ## 왜 3계층인가
 
 ```
@@ -26,18 +28,18 @@ bgg_mart    — 퍼널·코호트·세그먼트 등 분석 결과. 노트북이 
 
 | 테이블 | 행수 | 만든 스크립트 | 내용 |
 |---|---:|---|---|
-| `user_info` | 2,954 | `scripts/collect/user.py` | 1차 스크리닝 통과 유저의 기본 정보 |
+| `user_info` | 3,000 | `scripts/collect/user.py` | 1차 스크리닝 통과 유저의 기본 정보 |
 | `user_info_v2` | 600 | `scripts/collect/verify_frame.py` | 신규 표집틀(frame_candidates.csv) 검증표본 |
-| `item_info` | 53,169 | `scripts/collect/collection.py` | 유저 컬렉션에서 처음 발견된 게임의 기본정보 |
+| `item_info` | 80,132 | `scripts/collect/collection.py` | 유저 컬렉션에서 처음 발견된 게임의 기본정보 |
 | `item_info_v2` | 47,310 | `scripts/collect/verify_frame.py` | 검증표본 600명이 소유한 게임의 기본정보 |
-| `item_details` | 53,166 | `scripts/collect/thing.py` | thing API 기본정보 블록 |
-| `item_stats` | 53,166 | `scripts/collect/thing.py` | thing API 통계 블록(복잡도·평점 등) |
-| `item_link` | 888,528 | `scripts/collect/thing.py` | 카테고리/메커닉/디자이너/퍼블리셔 (long 포맷) |
-| `item_rank` | 74,101 | `scripts/collect/thing.py` | 서브타입별 순위(전체순위 + 장르별순위) |
-| `user_item` | 495,346 | `scripts/collect/collection.py` | 유저×게임 컬렉션(own=1) |
+| `item_details` | 85,442 | `scripts/collect/thing.py` | thing API 기본정보 블록 |
+| `item_stats` | 85,442 | `scripts/collect/thing.py` | thing API 통계 블록(복잡도·평점 등) |
+| `item_link` | 1,240,967 | `scripts/collect/thing.py` | 카테고리/메커닉/디자이너/퍼블리셔 (long 포맷) |
+| `item_rank` | 111,882 | `scripts/collect/thing.py` | 서브타입별 순위(전체순위 + 장르별순위) |
+| `user_item` | 1,309,380 | `scripts/collect/collection.py` | 유저×게임 컬렉션(own=1) |
 | `user_item_v2` | 264,738 | `scripts/collect/verify_frame.py` | 검증표본 600명의 컬렉션(own=1) |
-| `user_wishlist` | 56,798 | `scripts/collect/wishlist.py` | 유저×게임 개인 위시리스트(wishlist=1) |
-| `user_play` | 520,892 | `scripts/collect_phase4_plays.py` | plays 표본(1,065명) 실제 플레이 로그 |
+| `user_wishlist` | 160,565 | `scripts/collect/wishlist.py` | 유저×게임 개인 위시리스트(wishlist=1) |
+| `user_play` | 1,272,008 | `scripts/collect_phase4_plays.py` | plays 표본(1,065명) 실제 플레이 로그 |
 | `plays_sample` | 1,065 | `scripts/collect_phase4_plays.py` | plays 표집 대상 명단(코호트 분모용) |
 
 ### 컬럼 의미
