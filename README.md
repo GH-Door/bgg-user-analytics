@@ -2,7 +2,7 @@
 
 <img src="assets/logo.png" width="280" alt="BoardGameGeek logo">
 
-<h1>🎲 BGG 유저 미플레이 분석</h1>
+<h1>🎲 BGG 유저의 보유-플레이 간극 분석</h1>
 
 <p>
   <strong>BoardGameGeek(BGG) 유저 행동 데이터로, 구매한 보드게임이 실제 플레이로 이어지지 못하는 지점을 규명한 분석 프로젝트</strong><br>
