@@ -9,7 +9,6 @@
 </p>
 
 <p>
-  <img src="https://img.shields.io/badge/Status-In%20Progress-yellow?style=flat-square">
   <img src="https://img.shields.io/badge/Python%203.11%2B-3776AB?style=flat-square&logo=python&logoColor=white">
   <img src="https://img.shields.io/badge/BigQuery-4285F4?style=flat-square&logo=googlebigquery&logoColor=white">
   <img src="https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas&logoColor=white">
@@ -24,7 +23,7 @@
 
 > - [BoardGameGeek(BGG)](https://boardgamegeek.com/)은 세계 최대 보드게임 사이트다.
 > - 보드게임 시장은 매출 규모로는 [성장 중](https://www.verifiedmarketresearch.com/product/board-games-market/)이지만 신규 유저 유입은 정체.
-> - 업계는 원인을 ["게임이 어려워서 초보자가 못 버틴다"](https://therewillbe.games/articles-essays/6578-barrier-to-entry-why-don-t-board-games-sell-like-video-games)와 ["사놓고 안 하는 백로그 현상"](https://tabletopstrategy.wordpress.com/2021/02/19/the-shelf-of-shame/) 두 가지로 진단
+> - 업계는 원인을 ["게임이 어려워서 초보자가 못 버틴다"](https://www.plaidhatgames.com/news/311/)와 ["사놓고 안 하는 백로그 현상"](https://tabletopstrategy.wordpress.com/2021/02/19/the-shelf-of-shame/) 두 가지로 진단
 > - 실제 유저 행동 데이터로 검증된 적은 없기에 BGG 유저 3,000명의 소유·평가·플레이 데이터를 직접 수집해
 > - 어디서 얼마나 다음 단계로 넘어가지 못하는지, 그 정체가 어떤 유저 특성과 함께 움직이는지, 시간이 지나도 그 구분이 유지되는지를 검증.
 
@@ -36,7 +35,7 @@
 | **🔧 Tech Stack** | Python, BigQuery(SQL), pandas, scipy, statsmodels, scikit-learn|
 | **📊 Dataset** | [BGG API](https://boardgamegeek.com/wiki/page/BGG_XML_API2) 사용(user / collection / thing / plays), 유저 3,000명 · 게임 85,442개 |
 
-전체 분석은 `jupyter/`의 [01.EDA](jupyter/01.EDA.ipynb) → [02.Funnel](jupyter/02.Funnel_Retention.ipynb) → [03.Segment](jupyter/03.Segment_Wishlist.ipynb) → [04.Trend](jupyter/04.Trend.ipynb) 순으로 읽는다.
+전체 분석은 `jupyter/`의 [01.EDA](jupyter/01.EDA.ipynb) → [02.Funnel](jupyter/02.Funnel.ipynb) → [03.Segment](jupyter/03.Segment_Wishlist.ipynb) → [04.Trend](jupyter/04.Trend.ipynb) 순으로 읽는다.
 
 ---
 
@@ -65,7 +64,7 @@
    - 유저 활동, 게임 특성의 분포부터 확인. 
    - 지니계수 0.78~0.80으로 활동이 소수에 쏠려 있어, 평균만으로는 유저를 설명할 수 없다는 걸 먼저 확인해야 했음. 
    - 게임 변수 14개 상관구조도 같이 확인해, 인기 지표들은 서로 강하게 묶이고 복잡도는 평점과 약하게만 연결된다는 걸 파악
-- **[02.Funnel](jupyter/02.Funnel_Retention.ipynb)**: 
+- **[02.Funnel](jupyter/02.Funnel.ipynb)**: 
    - 활동이 쏠려 있다면 그 경계가 어디인지 실측 필요 
    - 보유→플레이→반복 플레이 3단계로 나눠 어디서 가장 많이 빠지는지 확인. 
    - 로지스틱 회귀로 보유 게임 수·평가 참여율 등 후보 변수의 영향을 오즈비로 비교
@@ -97,7 +96,7 @@
 
 | 가설 | 검정 결과 | 판정 |
 |---|---|:---:|
-| H1 | - 반복 플레이 있음 647명은 활동 연수 중앙값 8년·2026년까지 활동<br>- 없음 82명은 1년·마지막 활동 7년 전<br>- 효과 크기 0.81, 매우 큼 | 채택 |
+| H1 | - 반복 플레이 있음: 647명, 활동 연수 중앙값: 8년, 2026년까지 활동<br>- 없음: 82명. 1년, 마지막 활동 7년 전<br>- 효과 크기 0.81, 매우 큼 | 채택 |
 | H2 | - 몰입형·수집가형·집중형은 지금도 활동 중<br>- 저관여형만 마지막 활동 4~5년 전<br>- "위험군은 수집가형"이라는 사전 예상과 반대로 확인 | 부분 채택 |
 | H3 | - 기간 미통제 시 85.5%→47.0%로 하락처럼 보이나<br>- 가입 후 1년 이내 기준으로 공정 비교하면 코호트 간 43~48%로 차이 거의 없음(카이제곱 p=0.635)<br>- 1차 결과는 관측 기간 편향으로 판단 | 기각 |
 
@@ -133,7 +132,7 @@
 
 | 세그먼트 | 인원 | 어떤 사람인가 |
 |---|---:|---|
-| 미플레이 | 956명 | 게임은 갖고 있지만 플레이한 적이 하나도 없음 ([04.Trend 2-2](jupyter/04.Trend.ipynb)) |
+| 미플레이 | 956명 | 게임은 갖고 있지만 플레이한 적이 하나도 없음 ([04.Trend](jupyter/04.Trend.ipynb) 2-2) |
 | 몰입형 | 455명 | 많이 갖고 있고, 가진 것도 잘 씀 |
 | 수집가형 | 539명 | 많이 갖고 있지만, 그중 일부만 씀 |
 | 집중형 | 539명 | 적게 갖고 있지만, 가진 것을 알뜰히 씀 |
@@ -154,14 +153,14 @@
 > 아래 액션은 위 Insight/Results에서 도출한 제안.  
 > 다만 데이터가 인과를 증명한 것이 아니라 관찰된 패턴에서 나온 가설이므로, 각 행에 실행 후 확인할 검증 방법을 함께 기재.
 
-| 타깃 | 근거 | 제안 액션 | 검증 방법(제안) |
+| 타깃 | 제안 액션 | 근거 | 검증 방법(제안) |
 |---|---|---|---|
-| 게임을 산 직후의 모든 유저 | 퍼널 최대 손실 구간(-32.5%p) | 등록 즉시 배지 지급<br>7일 미기록 시 플레이 안내 | 배지 노출군 vs 비노출군<br>첫 플레이 전환율 A/B 테스트 |
-| 최근 가입자(2021년 이후) | 가입 후 1년 이내 기록 보유율<br>전 코호트 43~48%로 고르게 낮음 | 가입 후 3일 내 행동 기반<br>온보딩 메일 자동 발송 | 가입 후 3일 내<br>첫 플레이 기록률(코호트별) |
-| 저관여형(몇 년째 안 돌아옴) | H2 | 3~5회 순차 발송<br>컴백 캠페인 | 발송 후 30~45일 내<br>재활동 비율 |
-| 수집가형(쟁여둔 건 많지만 지금도 활동 중) | H2 | 미플레이 보유 게임<br>"다음에 할 게임" 추천 | 추천 클릭률<br>추천 후 플레이 전환율 |
-| 평가만 하고 플레이는 안 하는 유저 | [Segment 분석](jupyter/03.Segment_Wishlist.ipynb) | 평점 등록 직후<br>플레이 기록 유도 안내 | 안내 노출 후<br>7일 내 플레이 전환율 |
-| 집중형(원하는 게임과 실제 하는 게임의 난이도 차가 가장 큼) | [Segment 분석](jupyter/03.Segment_Wishlist.ipynb) | 위시리스트 게임과<br>난이도 유사 신작 추천 | 추천 후<br>구매·플레이 전환율 |
+| 게임을 산 직후의 모든 유저 | 등록 즉시 배지(완료 보상 아이콘) 지급<br>7일 미기록 시 플레이 안내 | 퍼널 최대 손실 구간(-32.5%p) | 배지 노출군 vs 비노출군<br>첫 플레이 전환율 A/B 테스트 |
+| 최근 가입자(2021년 이후) | 가입 후 3일 내 행동 기반<br>온보딩 메일 자동 발송 | 가입 후 1년 이내 기록 보유율<br>전 코호트 43~48%로 고르게 낮음 | 가입 후 3일 내<br>첫 플레이 기록률(코호트별) 확인 |
+| 저관여형(몇 년째 안 돌아옴) | 3~5회 순차 발송<br>컴백 캠페인 | H2 — 저관여형만 마지막 활동<br>4~5년 전으로 확인([04.Trend](jupyter/04.Trend.ipynb) 2) | 발송 후 30~45일 내<br>재활동 비율 확인 |
+| 수집가형(쟁여둔 건 많지만 지금도 활동 중) | 미플레이 보유 게임<br>"다음에 할 게임" 추천 | H2 — 몰입형·집중형과 마찬가지로<br>2026년까지 활동 지속([04.Trend](jupyter/04.Trend.ipynb) 2) | 추천 클릭률<br>추천 후 플레이 전환율 확인 |
+| 평가만 하고 플레이는 안 하는 유저 | 평점 등록 직후<br>플레이 기록 유도 안내 | 미플레이 유저 99%가 평점은 남김<br>([Segment 분석](jupyter/03.Segment_Wishlist.ipynb) 2-0) | 안내 노출 후<br>7일 내 플레이 전환율 확인 |
+| 집중형(원하는 게임과 실제 하는 게임의 난이도 차가 가장 큼) | 위시리스트 게임과<br>난이도 유사 신작 추천 | 위시-실제 플레이 복잡도 격차 가장 큼(0.26)<br>([Segment 분석](jupyter/03.Segment_Wishlist.ipynb) 4-1) | 추천 후<br>구매·플레이 전환율 확인 |
 
 > - 다만 이 프로젝트가 다룬 건 이미 가입해서 게임을 보유한 사람들의 행동뿐.
 > - 신규 유입 자체를 늘리는 액션은 이 데이터로 증명 불가
