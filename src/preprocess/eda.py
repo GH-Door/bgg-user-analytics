@@ -135,7 +135,7 @@ class AdvanceEDA:
         """정규성 검정 (Shapiro-Wilk test)
         - p_value >= 0.05: 정규분포를 따른다고 볼 수 있음
         - p_value < 0.05: 정규분포를 따르지 않음
-        - 샘플 수가 5000개 초과 시 처음 5000개만 사용 (Shapiro 제한)
+        - 샘플 수가 5000개 초과 시 무작위 5000개만 사용 (Shapiro 제한)
         """
         numeric_cols = df.select_dtypes(include=np.number).columns
         results = []
@@ -155,8 +155,9 @@ class AdvanceEDA:
                 })
                 continue
 
-            # Shapiro-Wilk는 5000개 제한
-            test_data = data[:5000] if len(data) > 5000 else data
+            # Shapiro-Wilk는 5000개 제한 — 앞에서부터 자르면 원본 정렬 순서(예: objectid 순)에
+            # 따라 표본이 한쪽으로 쏠릴 수 있어 무작위로 뽑는다.
+            test_data = data.sample(n=5000, random_state=42) if len(data) > 5000 else data
             stat, p_value = stats.shapiro(test_data)
             skewness = stats.skew(data)
             kurtosis = stats.kurtosis(data)
