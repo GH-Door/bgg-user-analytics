@@ -21,11 +21,11 @@
 
 ## Overview
 
-> - [BoardGameGeek(BGG)](https://boardgamegeek.com/)은 세계 최대 보드게임 사이트다.
-> - 보드게임 시장은 매출 규모로는 [성장 중](https://www.verifiedmarketresearch.com/product/board-games-market/)이지만 신규 유저 유입은 정체.
-> - 업계는 원인을 ["게임이 어려워서 초보자가 못 버틴다"](https://www.plaidhatgames.com/news/311/)와 ["사놓고 안 하는 백로그 현상"](https://tabletopstrategy.wordpress.com/2021/02/19/the-shelf-of-shame/) 두 가지로 진단
-> - 실제 유저 행동 데이터로 검증된 적은 없기에 BGG 유저 3,000명의 소유·평가·플레이 데이터를 직접 수집해
-> - 어디서 얼마나 다음 단계로 넘어가지 못하는지, 그 정체가 어떤 유저 특성과 함께 움직이는지, 시간이 지나도 그 구분이 유지되는지를 검증.
+> - [BoardGameGeek(BGG)](https://boardgamegeek.com/)는 세계 최대 보드게임 사이트로,
+> - 보드게임을 구매·보유해도 실제 플레이로 이어지지 않는 ["백로그(shelf of shame)"](https://tabletopstrategy.wordpress.com/2021/02/19/the-shelf-of-shame/) 현상이 커뮤니티에서 널리 알려져 있는데,
+> - BGG는 보유 목록과 플레이 기록을 별도 필드로 관리해 이 간극을 데이터로 측정할 수 있다.
+> - 다만 이 간극이 실제로 얼마나 크고 누구에게 더 크게 나타나는지는 정량적으로 검증된 적이 없어,
+> - BGG 유저 3,000명의 보유·플레이 데이터를 직접 수집해, 보유가 플레이로 이어지지 않는 지점과 그 지점의 유저 특성을 분석했다.
 
 | 항목 | 내용 |
 |:-----|:-----|
