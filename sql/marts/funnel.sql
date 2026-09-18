@@ -1,4 +1,4 @@
--- 퍼널: 보유 → 플레이 기록 존재 → 반복 플레이 기록 (3단계).
+-- 퍼널: 보유 → 플레이함 → 반복 플레이 (3단계).
 -- Core User는 퍼널 단계가 **아니다** — 플레이 기록이 있는 유저를 total_numplays
 -- 상위 20%로 자른 세그먼트 플래그일 뿐이다(01.EDA 8-1 참고). 통과 실패가 일어나는
 -- 관문이 아니라 분위수 컷오프이므로, funnel_user_summary의 전환율(LAG) 계산에는
@@ -91,9 +91,9 @@ core_cutoff AS (
 )
 SELECT
   info.user_id,
-  s.user_id IS NOT NULL AS is_owner,                                   -- 1단계: 컬렉션 보유
-  COALESCE(s.total_numplays, 0) > 0 AS has_play_record,                -- 2단계: 플레이 기록 존재
-  COALESCE(s.n_repeat_games, 0) > 0 AS has_repeat_play_record,         -- 3단계: 반복 플레이 기록
+  s.user_id IS NOT NULL AS is_owner,                                   -- 1단계: 보유
+  COALESCE(s.total_numplays, 0) > 0 AS has_play_record,                -- 2단계: 플레이함
+  COALESCE(s.n_repeat_games, 0) > 0 AS has_repeat_play_record,         -- 3단계: 반복 플레이
   COALESCE(s.total_numplays, 0) >= (SELECT cutoff FROM core_cutoff)
     AND COALESCE(s.total_numplays, 0) > 0 AS is_core_user,             -- 세그먼트(퍼널 아님)
   s.n_rated,                                                            -- engagement 보조 컬럼(퍼널 단계 아님)
@@ -106,11 +106,11 @@ LEFT JOIN user_stats s USING (user_id);
 -- 아니라 segment 행으로 따로 둬서 LAG 기반 전환율 계산에 섞이지 않게 한다.
 CREATE OR REPLACE VIEW `bgg_mart.funnel_user_summary` AS
 WITH stage_counts AS (
-  SELECT 1 AS stage_order, '1.컬렉션 보유' AS stage, COUNTIF(is_owner) AS n FROM `bgg_mart.funnel_user`
+  SELECT 1 AS stage_order, '1.보유' AS stage, COUNTIF(is_owner) AS n FROM `bgg_mart.funnel_user`
   UNION ALL
-  SELECT 2, '2.플레이 기록 존재', COUNTIF(has_play_record) FROM `bgg_mart.funnel_user`
+  SELECT 2, '2.플레이함', COUNTIF(has_play_record) FROM `bgg_mart.funnel_user`
   UNION ALL
-  SELECT 3, '3.반복 플레이 기록', COUNTIF(has_repeat_play_record) FROM `bgg_mart.funnel_user`
+  SELECT 3, '3.반복 플레이', COUNTIF(has_repeat_play_record) FROM `bgg_mart.funnel_user`
 )
 SELECT
   stage_order,
